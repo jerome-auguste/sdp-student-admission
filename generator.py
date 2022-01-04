@@ -7,7 +7,7 @@ class Generator():
         self.size = size
         self.lmbda = lmbda
         if lmbda is None:
-            self.lmbda = uniform(0.25,0.75)
+            self.lmbda = uniform(0.25,0.75) # Dans les équations du papier de Mousseau il est dit que lambda est dans [0.5, 1]
         self.weights = weights
         if weights is None:
             self.weights = np.random.standard_normal(num_criterions)+2
