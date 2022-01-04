@@ -15,7 +15,6 @@ Let's define the *minimum error* over all students :
 
 $$ \alpha = \min_{s} \sigma_s $$
 
-
 LP :
 
 $$ \max \alpha $$
@@ -23,7 +22,7 @@ $$ \max \alpha $$
 s.t
 $$
     \sum_{i \in N}{w_i(s)} + \sigma_s + \epsilon = \lambda \quad \forall s \in R^* \\
-    
+
     \sum_{i \in N} w_i(s) = \lambda +  \sigma_s\quad\forall s \in A^* \\
 
     \alpha \leq \sigma_s\quad\forall s \in A^* \\
