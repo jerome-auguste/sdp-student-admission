@@ -8,6 +8,7 @@ from itertools import product
 #%%
 gen = Generator(size=1000)
 grades,admission = gen.generate()
+print(f"Parameters:\nlambda: {gen.lmbda}\nweights: {gen.weights}\nfrontier: {gen.frontier}")
 
 model = Model("MR-sort")
 
@@ -71,3 +72,10 @@ model.addConstrs(((M*(d[j,i] - 1) <= w[i]*grades[j,i] - b[i]) for j,i in product
 model.addConstr(one_line @ w == 1)
 
 model.update()
+
+model.setObjective(alpha, GRB.MAXIMIZE)
+
+# Résolution du PL
+model.params.outputflag = 0 # (mode mute)
+model.optimize()
+print(f"\nResults:\nlambda: {lmbda.X}\nw: {w.X}\nb {b.X}")
