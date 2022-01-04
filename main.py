@@ -5,12 +5,9 @@ from numpy.core.fromnumeric import shape
 from generator import Generator
 
 #%%
-gen = Generator(size=10, lmbda=12, weights=np.array([0.2, 0.4, 0.3, 0.1]), frontier=0.5)
-ech = gen.generate()
-print(ech)
+from generator import Generator
+grades,admission = Generator(size=1000).generate()
 
-exit
-#%%
 model = Model("MR-sort")
 
 # Constants
