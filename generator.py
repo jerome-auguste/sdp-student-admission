@@ -19,12 +19,12 @@ class Generator():
         self.num_criterions = len(self.weights) # num_criterions directement non ?
         self.frontier = frontier
         if frontier is None:
-            self.frontier = np.random.rand(self.num_criterions)*3+12
+            self.frontier = (np.random.rand(self.num_criterions)-0.5)*3+12
 
     def label(self,grades:np.ndarray) -> np.ndarray:
         ok = grades > self.frontier
         return (ok*self.weights).sum(axis=1) > self.lmbda
 
     def generate(self):
-        grades = np.random.standard_normal((self.size,self.num_criterions))*3+10
+        grades = np.random.standard_normal((self.size,self.num_criterions))*3+12
         return grades,self.label(grades)

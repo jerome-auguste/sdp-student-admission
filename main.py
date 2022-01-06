@@ -78,4 +78,4 @@ model.setObjective(alpha, GRB.MAXIMIZE)
 # Résolution du PL
 model.params.outputflag = 0 # (mode mute)
 model.optimize()
-print(f"\nResults:\nlambda: {lmbda.X}\nw: {w.X}\nb {b.X}")
+print(f"\nResults:\nalpha: {alpha.X}\nlambda: {lmbda.X}\nw: {w.X}\nb {b.X}")
