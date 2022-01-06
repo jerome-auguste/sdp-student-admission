@@ -3,7 +3,6 @@ from random import uniform
 
 
 # TODO:
-# - Balance the train set (having approximately the same amount for each class)
 # - Add option to generate more than 2 classes (questions xi. and  xvii.)
 
 class Generator():
