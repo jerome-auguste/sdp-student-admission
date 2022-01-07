@@ -38,16 +38,13 @@ d = model.addMVar(shape=(nb_ech, nb_notes), vtype=GRB.BINARY)
 # - la multiplication element par element (a*b) semble
 #   poser probleme avec les variables Gurobi
 
-rejected = [j for j in range(nb_ech) if not admission[j]]
-ok = [j for j in range(nb_ech) if admission[j]]
-
 model.addConstrs((
     quicksum(c[j,i] for i in range(nb_notes)) + x[j] + epsilon == lmbda
-    ) for j in rejected
+    ) for j in range(nb_ech) if not admission[j]
 )
 model.addConstrs((
     quicksum(c[j,i] for i in range(nb_notes)) == lmbda + y[j]
-    ) for j in ok
+    ) for j in range(nb_ech) if admission[j]
 )
 
 model.addConstrs((alpha <= x[j]) for j in range(nb_ech))
