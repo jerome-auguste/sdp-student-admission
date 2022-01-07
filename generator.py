@@ -3,7 +3,7 @@ import numpy as np
 from random import uniform
 
 class Generator():
-    def __init__(self,size:int,num_classes = 2, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None,num_criterions = 4) -> None:
+    def __init__(self,size:int = 1000,num_classes:int= 2,num_criterions:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None) -> None:
         self.size = size
         self.lmbda = lmbda
         self.num_classes = num_classes
@@ -42,4 +42,6 @@ class Generator():
     def generate(self):
         grades = np.random.standard_normal((self.size,self.num_criterions))*3+12
         return grades,self.label(grades)
+# %%
+
 # %%
