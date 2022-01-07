@@ -26,8 +26,8 @@ class MRSort:
 
         self.lmbda = self.model.addVar(lb=0.5, ub=1)
 
-        self.c = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), lb=0, ub=1)
-        self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), vtype=GRB.BINARY)
+        self.c = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, 2), lb=0, ub=1)
+        self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, 2), vtype=GRB.BINARY)
     
     def solve(self):
         if self.objective == None:
@@ -50,14 +50,14 @@ class MRSort:
         )
 
     def print_res(self):
-        passing_grades = self.grades > self.b.X[0]
-        res = (passing_grades*self.w.X).sum(axis=1) > self.lmbda.X
+        res = np.zeros((self.nb_ech))
+        for i in range(self.nb_split):
+            res += ((self.grades > self.b.X[:,i])*self.w.X).sum(axis=1) > self.lmbda.X
   
         print(f"Resultats:\n",
             f"- alpha: {self.alpha.X}\n",
             f"- lambda: {self.lmbda.X}\n",
             f"- weights: {self.w.X}\n",
-            f"- frontier: {self.b.X}\n",
             f"- resultats: {dict(Counter(res))}\n",
             f"- precision: {sum([res[i]==self.admission[i] for i in range(len(res))])/len(res)}\n"
         )
@@ -69,21 +69,34 @@ class MRSort:
 
         self.model.addConstrs((
             quicksum(self.c[j,i,h] for i in range(self.nb_notes)) + self.x[j] + epsilon == self.lmbda
-            ) for j,h in product(range(self.nb_ech), range(self.nb_split)) if not self.admission[j]
+            ) for j,h in product(range(self.nb_ech), range(self.nb_split)) if h == self.admission[j]
         )
         self.model.addConstrs((
             quicksum(self.c[j,i,h] for i in range(self.nb_notes)) == self.lmbda + self.y[j]
-            ) for j,h in product(range(self.nb_ech), range(self.nb_split)) if self.admission[j]
+            ) for j,h in product(range(self.nb_ech), range(self.nb_split)) if h+1 == self.admission[j]
         )
-
         self.model.addConstrs((self.alpha <= self.x[j]) for j in range(self.nb_ech))
         self.model.addConstrs((self.alpha <= self.y[j]) for j in range(self.nb_ech))
-        self.model.addConstrs((self.c[j,:,h] <= self.w + epsilon) for j,h in product(range(self.nb_ech), range(self.nb_split)))
-        self.model.addConstrs((self.c[j,:,h] <= self.d[j,:,h]) for j,h in product(range(self.nb_ech), range(self.nb_split)))
-        self.model.addConstrs((self.c[j,:,h] >= self.d[j,:,h] - np.ones(self.nb_notes) + self.w) for j,h in product(range(self.nb_ech), range(self.nb_split)))
-        self.model.addConstrs(((M*self.d[j,:,h] + epsilon*np.ones(self.nb_notes) >= self.grades[j,] - self.b[:,h]) for j,h in product(range(self.nb_ech), range(self.nb_split))))
-        self.model.addConstrs(((M*(self.d[j,:,h] - np.ones(self.nb_notes)) <= self.grades[j,] - self.b[:,h]) for j,h in product(range(self.nb_ech), range(self.nb_split))))
-
+        self.model.addConstrs((
+            self.c[j,:,h] <= self.w + epsilon)
+            for j,h in product(range(self.nb_ech), range(self.nb_split))if h == self.admission[j] or h+1 == self.admission[j]
+        )
+        self.model.addConstrs((
+            self.c[j,:,h] <= self.d[j,:,h])
+            for j,h in product(range(self.nb_ech), range(self.nb_split)) if h == self.admission[j] or h+1 == self.admission[j]
+        )
+        self.model.addConstrs((
+            self.c[j,:,h] >= self.d[j,:,h] - np.ones(self.nb_notes) + self.w)
+            for j,h in product(range(self.nb_ech), range(self.nb_split)) if h == self.admission[j] or h+1 == self.admission[j]
+        )
+        self.model.addConstrs((
+            M*self.d[j,:,h] + epsilon*np.ones(self.nb_notes) >= self.grades[j,] - self.b[:,h])
+            for j,h in product(range(self.nb_ech), range(self.nb_split)) if h == self.admission[j] or h+1 == self.admission[j]
+        )
+        self.model.addConstrs((
+            (M*(self.d[j,:,h] - np.ones(self.nb_notes)) <= self.grades[j,] - self.b[:,h]))
+            for j,h in product(range(self.nb_ech), range(self.nb_split)) if h == self.admission[j] or h+1 == self.admission[j]
+        )
         self.model.addConstr(quicksum(self.w[k] for k in range(self.nb_notes)) == 1)
     
         self.objective = self.alpha

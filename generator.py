@@ -40,6 +40,6 @@ class Generator():
         return passed
 
     def generate(self):
-        grades = np.random.standard_normal((self.size,self.num_criterions))*3+10
+        grades = np.random.standard_normal((self.size,self.num_criterions))*3+12
         return grades,self.label(grades)
 # %%
