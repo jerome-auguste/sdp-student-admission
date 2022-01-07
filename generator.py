@@ -1,6 +1,10 @@
 import numpy as np
 from random import uniform
 
+
+# TODO:
+# - Add option to generate more than 2 classes (questions xi. and  xvii.)
+
 class Generator():
     def __init__(self,size:int,lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None,num_criterions = 4) -> None:
         self.size = size
@@ -9,9 +13,9 @@ class Generator():
             self.lmbda = uniform(0.25,0.75) # Dans les équations du papier de Mousseau il est dit que lambda est dans [0.5, 1]
         self.weights = weights
         if weights is None:
-            self.weights = np.random.standard_normal(num_criterions)+2
+            self.weights = np.random.standard_normal(num_criterions)+2 # Pourquoi +2 ?
             self.weights /= self.weights.sum()
-        self.num_criterions = len(self.weights)
+        self.num_criterions = len(self.weights) # num_criterions directement non ?
         self.frontier = frontier
         if frontier is None:
             self.frontier = (np.random.rand(self.num_criterions)-0.5)*3+12
