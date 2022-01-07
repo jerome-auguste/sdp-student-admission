@@ -6,8 +6,9 @@ from generator import Generator
 from itertools import product
 from collections import Counter
 import sys
+np.set_printoptions(precision=2)
 
-gen = Generator(size=100)
+gen = Generator(size=1000)
 grades,admission = gen.generate()
 print(f"Parameters:\nlambda: {gen.lmbda}\nweights: {gen.weights}\nfrontier: {gen.frontier}\nelements: {dict(Counter(admission))}\n")
 
@@ -16,7 +17,7 @@ model = Model("MR-sort")
 # Constants
 nb_ech = gen.size
 nb_notes = gen.num_criterions
-epsilon = 1e-6
+epsilon = 1e-9
 M = 1e2 # superieur a l'ecart max, 20
 
 # Gurobi variables
@@ -39,11 +40,11 @@ d = model.addMVar(shape=(nb_ech, nb_notes), vtype=GRB.BINARY)
 
 model.addConstrs((
     quicksum(c[j,i] for i in range(nb_notes)) + x[j] + epsilon == lmbda
-    ) for j in range(nb_ech) if admission[j]
+    ) for j in range(nb_ech) if not admission[j]
 )
 model.addConstrs((
     quicksum(c[j,i] for i in range(nb_notes)) == lmbda + y[j]
-    ) for j in range(nb_ech) if not admission[j]
+    ) for j in range(nb_ech) if admission[j]
 )
 
 model.addConstrs((alpha <= x[j]) for j in range(nb_ech))
@@ -72,5 +73,15 @@ Results:
 - alpha: {alpha.X}
 - lambda: {lmbda.X}
 - w: {w.X}
-- b {b.X}
+- b: {b.X}
 """)
+
+ok = grades > b.X
+res = (ok*w.X).sum(axis=1) > lmbda.X
+print(dict(Counter(res)))
+
+count = 0
+for i in range(len(res)):
+    if res[i] == admission[i]:
+        count += 1
+print(count/len(res))
