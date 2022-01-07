@@ -1,4 +1,3 @@
-#%%
 import numpy as np
 from random import uniform
 
@@ -24,4 +23,3 @@ class Generator():
     def generate(self):
         grades = np.random.standard_normal((self.size,self.num_criterions))*3+12
         return grades,self.label(grades)
-# %%
