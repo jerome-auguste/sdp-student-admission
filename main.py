@@ -45,11 +45,11 @@ print(ok)
 print(rejected)
 model.addConstrs((
     quicksum(c[j,i] for i in range(nb_notes)) + x[j] + epsilon == lmbda
-    ) for j in ok
+    ) for j in rejected
 )
 model.addConstrs((
     quicksum(c[j,i] for i in range(nb_notes)) == lmbda + y[j]
-    ) for j in rejected
+    ) for j in ok
 )
 
 model.addConstrs((alpha <= x[j]) for j in range(nb_ech))
