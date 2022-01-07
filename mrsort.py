@@ -26,8 +26,8 @@ class MRSort:
 
         self.lmbda = self.model.addVar(lb=0.5, ub=1)
 
-        self.c = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, 2), lb=0, ub=1)
-        self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, 2), vtype=GRB.BINARY)
+        self.c = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), lb=0, ub=1)
+        self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), vtype=GRB.BINARY)
     
     def solve(self):
         if self.objective == None:
