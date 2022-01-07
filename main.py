@@ -48,7 +48,7 @@ model.addConstrs((
 
 model.addConstrs((alpha <= x[j]) for j in range(nb_ech))
 model.addConstrs((alpha <= y[j]) for j in range(nb_ech))
-model.addConstrs((c[j,] <= w) for j in range(nb_ech))
+model.addConstrs((c[j,] <= w + epsilon) for j in range(nb_ech))
 model.addConstrs((c[j,] <= d[j,]) for j in range(nb_ech))
 model.addConstrs((c[j,] >= d[j,] - np.ones(nb_notes) + w) for j in range(nb_ech))
 model.addConstrs(((M*d[j,] + epsilon*np.ones(nb_notes) >= grades[j,] - b) for j in range(nb_ech)))
