@@ -6,10 +6,13 @@ from generator import Generator
 from itertools import product
 from collections import Counter
 import sys
+from parseArg import parseArguments
 np.set_printoptions(precision=2)
 
-gen = Generator(size=1000)
-grades,admission = gen.generate()
+if __name__=='__main__':
+    args = parseArguments()
+    gen = Generator(args.size,args.num_classes,args.num_criterions,args.lmbda)
+    grades,admission = gen.generate()
 print(f"Parameters:\nlambda: {gen.lmbda}\nweights: {gen.weights}\nfrontier: {gen.frontier}\nelements: {dict(Counter(admission))}\n")
 
 model = Model("MR-sort")
@@ -84,4 +87,4 @@ count = 0
 for i in range(len(res)):
     if res[i] == admission[i]:
         count += 1
-print(count/len(res))
+print(f'Precision : {count/len(res)}')
