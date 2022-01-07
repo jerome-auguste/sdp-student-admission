@@ -13,7 +13,7 @@ class Generator():
         self.weights = weights
         if weights is None:
             self.weights = self.init_weights()
-        self.frontiers = frontier
+        self.frontier = frontier
         if frontier is None:
             self.frontier = self.init_frontier()
 

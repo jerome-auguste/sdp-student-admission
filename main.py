@@ -3,7 +3,7 @@
 from generator import Generator
 from mrsort import MRSort
 
-gen = Generator(size=1000)
+gen = Generator(size=1000, weights=[0.2, 0.4, 0.25, 0.15], frontier=[12, 13, 10, 11])
 mrs = MRSort(gen)
 
 mrs.print_data()

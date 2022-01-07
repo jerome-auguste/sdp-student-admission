@@ -2,13 +2,13 @@ from gurobipy import *
 import numpy as np
 from numpy.core.fromnumeric import shape
 from collections import Counter
-
+from itertools import product
 np.set_printoptions(precision=2)
 
 class MRSort:
     def __init__(self, generator):
         self.gen = generator
-        self.num_classes = generator.num_classes
+        self.nb_split = generator.num_classes - 1
         self.grades, self.admission = generator.generate()
         self.model = Model("MR-sort")
         self.objective = None
@@ -22,12 +22,12 @@ class MRSort:
         self.x = self.model.addMVar(shape=self.nb_ech) # slack for each student (in A*)
         self.y = self.model.addMVar(shape=self.nb_ech) # slack for each student (in R*)
         self.w = self.model.addMVar(shape=self.nb_notes, lb=0, ub=1)
-        self.b = self.model.addMVar(shape=self.nb_notes)
+        self.b = self.model.addMVar(shape=(self.nb_notes, self.nb_split))
 
         self.lmbda = self.model.addVar(lb=0.5, ub=1)
 
-        self.c = self.model.addMVar(shape=(self.nb_ech, self.nb_notes), lb=0, ub=1)
-        self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes), vtype=GRB.BINARY)
+        self.c = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), lb=0, ub=1)
+        self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), vtype=GRB.BINARY)
     
     def solve(self):
         if self.objective == None:
@@ -50,7 +50,7 @@ class MRSort:
         )
 
     def print_res(self):
-        passing_grades = self.grades > self.b.X
+        passing_grades = self.grades > self.b.X[0]
         res = (passing_grades*self.w.X).sum(axis=1) > self.lmbda.X
   
         print(f"Resultats:\n",
@@ -64,31 +64,28 @@ class MRSort:
             
 
     def set_constraint(self):
-        if self.num_classes == 2:
-            epsilon = 1e-9
-            M = 1e2 # superieur a l'ecart max, 20
+        epsilon = 1e-9
+        M = 1e2 # superieur a l'ecart max, 20
 
-            self.model.addConstrs((
-                quicksum(self.c[j,i] for i in range(self.nb_notes)) + self.x[j] + epsilon == self.lmbda
-                ) for j in range(self.nb_ech) if not self.admission[j]
-            )
-            self.model.addConstrs((
-                quicksum(self.c[j,i] for i in range(self.nb_notes)) == self.lmbda + self.y[j]
-                ) for j in range(self.nb_ech) if self.admission[j]
-            )
+        self.model.addConstrs((
+            quicksum(self.c[j,i,h] for i in range(self.nb_notes)) + self.x[j] + epsilon == self.lmbda
+            ) for j,h in product(range(self.nb_ech), range(self.nb_split)) if not self.admission[j]
+        )
+        self.model.addConstrs((
+            quicksum(self.c[j,i,h] for i in range(self.nb_notes)) == self.lmbda + self.y[j]
+            ) for j,h in product(range(self.nb_ech), range(self.nb_split)) if self.admission[j]
+        )
 
-            self.model.addConstrs((self.alpha <= self.x[j]) for j in range(self.nb_ech))
-            self.model.addConstrs((self.alpha <= self.y[j]) for j in range(self.nb_ech))
-            self.model.addConstrs((self.c[j,] <= self.w + epsilon) for j in range(self.nb_ech))
-            self.model.addConstrs((self.c[j,] <= self.d[j,]) for j in range(self.nb_ech))
-            self.model.addConstrs((self.c[j,] >= self.d[j,] - np.ones(self.nb_notes) + self.w) for j in range(self.nb_ech))
-            self.model.addConstrs(((M*self.d[j,] + epsilon*np.ones(self.nb_notes) >= self.grades[j,] - self.b) for j in range(self.nb_ech)))
-            self.model.addConstrs(((M*(self.d[j,] - np.ones(self.nb_notes)) <= self.grades[j,] - self.b) for j in range(self.nb_ech)))
+        self.model.addConstrs((self.alpha <= self.x[j]) for j in range(self.nb_ech))
+        self.model.addConstrs((self.alpha <= self.y[j]) for j in range(self.nb_ech))
+        self.model.addConstrs((self.c[j,:,h] <= self.w + epsilon) for j,h in product(range(self.nb_ech), range(self.nb_split)))
+        self.model.addConstrs((self.c[j,:,h] <= self.d[j,:,h]) for j,h in product(range(self.nb_ech), range(self.nb_split)))
+        self.model.addConstrs((self.c[j,:,h] >= self.d[j,:,h] - np.ones(self.nb_notes) + self.w) for j,h in product(range(self.nb_ech), range(self.nb_split)))
+        self.model.addConstrs(((M*self.d[j,:,h] + epsilon*np.ones(self.nb_notes) >= self.grades[j,] - self.b[:,h]) for j,h in product(range(self.nb_ech), range(self.nb_split))))
+        self.model.addConstrs(((M*(self.d[j,:,h] - np.ones(self.nb_notes)) <= self.grades[j,] - self.b[:,h]) for j,h in product(range(self.nb_ech), range(self.nb_split))))
 
-            self.model.addConstr(quicksum(self.w[k] for k in range(self.nb_notes)) == 1)
-        
-            self.objective = self.alpha
-        else:
-            raise AttributeError()
+        self.model.addConstr(quicksum(self.w[k] for k in range(self.nb_notes)) == 1)
+    
+        self.objective = self.alpha
 
 
