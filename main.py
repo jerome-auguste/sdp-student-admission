@@ -8,7 +8,7 @@ from collections import Counter
 import sys
 np.set_printoptions(precision=2)
 
-gen = Generator(size=10)
+gen = Generator(size=1000)
 grades,admission = gen.generate()
 print(f"Parameters:\nlambda: {gen.lmbda}\nweights: {gen.weights}\nfrontier: {gen.frontier}\nelements: {dict(Counter(admission))}\n")
 
@@ -40,16 +40,14 @@ d = model.addMVar(shape=(nb_ech, nb_notes), vtype=GRB.BINARY)
 
 rejected = [j for j in range(nb_ech) if not admission[j]]
 ok = [j for j in range(nb_ech) if admission[j]]
-print(admission)
-print(ok)
-print(rejected)
+
 model.addConstrs((
     quicksum(c[j,i] for i in range(nb_notes)) + x[j] + epsilon == lmbda
-    ) for j in ok
+    ) for j in rejected
 )
 model.addConstrs((
     quicksum(c[j,i] for i in range(nb_notes)) == lmbda + y[j]
-    ) for j in rejected
+    ) for j in ok
 )
 
 model.addConstrs((alpha <= x[j]) for j in range(nb_ech))
@@ -69,23 +67,10 @@ model.setObjective(alpha, GRB.MAXIMIZE)
 model.params.outputflag = 0 # (mode mute)
 model.optimize()
 
-print('Notes')
-print(np.array([grades[j] for j in ok]).min(axis=0))
-print(grades.min(axis=0))
-print("x")
-print(x.X)
-print("y")
-print(y.X)
-print("c")
-print(c.X)
-print("d")
-print(d.X)
 if model.status != GRB.OPTIMAL:
     print("cannot converge")
     sys.exit()
 
-print(x.X)
-print(y.X)
 print(f"""
 Results:
 - alpha: {alpha.X}
@@ -95,4 +80,11 @@ Results:
 """)
 
 ok = grades > b.X
-print((ok*w.X).sum(axis=1) > lmbda.X)
+res = (ok*w.X).sum(axis=1) > lmbda.X
+print(dict(Counter(res)))
+
+count = 0
+for i in range(len(res)):
+    if res[i] == admission[i]:
+        count += 1
+print(count/len(res))
