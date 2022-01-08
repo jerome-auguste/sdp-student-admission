@@ -18,17 +18,22 @@ class Generator():
             self.frontier = self.init_frontier()
 
     def init_weights(self) -> np.ndarray:
+        #Genère les poids selon une distrib normale pour qu'ils ne soient pas trop différents
         w = np.random.standard_normal(self.num_criterions) + 2
         w /= w.sum()
+        #On vérifie qu'il n'y a pas de poids négatif et on retire tant que ça n'est pas le cas
         while any(w < 0):
             w = np.random.standard_normal(self.num_criterions) + 2
             w /= w.sum()
         return w
 
     def init_frontier(self) -> np.ndarray:
+        # dernière limite basse (précédente frontière)
         last = np.zeros(self.num_criterions)
         frontiers = []
         for i in range(1,self.num_classes):
+            # on tire une array de variable aléatoire sur une distrib uniforme entre la frontière précédente
+            # de chaque critère et i/nombre de classes pour s'assurer de la dominance de la classe suivante sur la précédente
             last = np.random.uniform(last,[i*20/self.num_classes]*self.num_criterions)
             frontiers.append(last)
         return np.array(frontiers)
@@ -40,8 +45,5 @@ class Generator():
         return passed
 
     def generate(self):
-        grades = np.random.standard_normal((self.size,self.num_criterions))*3+12
+        grades = np.random.uniform(0,20,(self.size,self.num_criterions))
         return grades,self.label(grades)
-# %%
-
-# %%
