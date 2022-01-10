@@ -11,13 +11,14 @@ We want to maximize data separation. Therefore, for each student, we can define 
 (Latex equation for report if needed)
 
  
-```$$\sum_{i}{w_{i}(s)}-\lambda - \sigma_s = 0 \forall s \in A^*$$
-$$\sum_{i}{w_{i}(s)}-\lambda + \sigma_s = 0 \forall s \in R^*$$
+```math
+\sum_{i}{w_{i}(s)}-\lambda - \sigma_s = 0 \forall s \in A^*
+\sum_{i}{w_{i}(s)}-\lambda + \sigma_s = 0 \forall s \in R^*
 
-$$ \alpha = \min_{s} \sigma_s $$
+ \alpha = \min_{s} \sigma_s 
 
 
-$$ \max \alpha $$
+ \max \alpha 
 
 \begin{tabular}{l l}
     $\sum_{i \in N}{w_i(s)} + \sigma_s + \epsilon = \lambda$ & $\forall s \in R^*$ \\
@@ -45,4 +46,5 @@ $$ \max \alpha $$
     $\sigma_s \in \mathbb{R}$ & $\forall s \in A^* \cup R^*$ \\
 
     $\alpha \in \mathbb{R}$
-\end{tabular}```
+\end{tabular}
+```
