@@ -14,6 +14,7 @@ We want to maximize data separation. Therefore, for each student, we can define 
 ```math
 \sum_{i}{w_{i}(s)}-\lambda - \sigma_s = 0 \forall s \in A^*
 \sum_{i}{w_{i}(s)}-\lambda + \sigma_s = 0 \forall s \in R^*
+```
 
  \alpha = \min_{s} \sigma_s 
 
