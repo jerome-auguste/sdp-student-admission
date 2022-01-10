@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Gophersat solver
+gophersat/
+
+# VSCode settings
+.vscode/
