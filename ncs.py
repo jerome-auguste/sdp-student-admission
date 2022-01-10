@@ -2,7 +2,6 @@ import numpy as np
 from itertools import product
 
 from numpy.core.fromnumeric import size
-from pysat.solvers import Glucose3
 from generator import Generator
 from collections import Counter
 import pprint as pp
@@ -31,7 +30,7 @@ for cat in range(gen.num_classes):
             if admission[student] == cat:
                 students_per_class[cat].append(student)
 
-pp.pprint(students_per_class)
+# pp.pprint(students_per_class)
 
 # Generate the indexes of the students per grade for each criterion
 students_per_grade = {}
@@ -42,35 +41,22 @@ for i in range(gen.num_criterions):
     for grade in grades_set:
         students_per_grade[i][grade] = [s for s, g in enumerate(grades_list) if g == grade]
 
-pp.pprint(students_per_grade)
+# pp.pprint(students_per_grade)
         
 
 # The list format of the boolean value is i + student_index*num_criterias + 1 (in range(1,train_set_size*num_criterias))
-def squeeze_grades(student_index: int, i: int) -> int:
+def squeezed_grades_index(student_index: int, i: int) -> int:
     return i + student_index*gen.num_criterions + 1
 
-def squeeze_coalitions(coalition_index: int) -> int:
+def squeezed_coalitions_index(coalition_index: int) -> int:
     return train_set_size*gen.num_criterions + coalition_index
 
-g = Glucose3()
+def grades_support_per_crit(grades: np.array):
+    grades_set = []
+    for i in range(gen.num_criterions):
+        grades_set.append(sorted(list(set([grades[stud, i] for stud in range(grades.shape[0])]))))
+    return grades_set
 
-# 3a
-for i in range(gen.num_criterions):
-    for h in range(num_classes):
-        for stud1 in students_per_class[h]:
-            for stud2 in students_per_class[h]:
-                if (grades[stud1][i] < grades[stud2][i]):
-                    g.add_clause([squeeze_grades(stud1, i), -squeeze_grades(stud2, i)])
-    
-# 3b
-for i in range(gen.num_criterions):
-    for k in students_per_grade[i].keys():
-        for stud1 in students_per_grade[i][k]:
-            for stud2 in students_per_grade[i][k]:
-                if (admission[stud1] < admission[stud2]):
-                    g.add_clause([squeeze_grades(stud1, i), -squeeze_grades(stud2, i)])
-
-# 3c
 def subsets(criteria: list) -> list:
     if criteria == []:
         return [[]]
@@ -79,9 +65,49 @@ def subsets(criteria: list) -> list:
 
 coalitions = subsets(list(range(gen.num_criterions)))
 
+# pp.pprint(grades_support_per_crit(grades), indent=4, compact=True)
+grades_support = grades_support_per_crit(grades)
+
+variables = {
+    "frontier_var": [(i, h, k) for i in range(gen.num_criterions) for h in range(num_classes) for k in grades_support[i]],
+    "coalition_var": coalitions
+    }
+
+pp.pprint(variables)
+
+# 3a
+
+# Considering the assessed classes in the train_set
+# for i in range(gen.num_criterions):
+#     for h in range(num_classes):
+#         for stud1 in students_per_class[h]:
+#             for stud2 in students_per_class[h]:
+#                 if (grades[stud1][i] < grades[stud2][i]):
+#                     g.add_clause([squeeze_grades(stud1, i), -squeeze_grades(stud2, i)])
+
+for i in range(gen.num_criterions):
+    for h in range(num_classes):
+        for ik in range(len(grades_support[i])):
+            for ikp in range(ik+1, len(grades_support[i])):
+                pass
+    
+# 3b
+
+for i in range(gen.num_criterions):
+    for k in students_per_grade[i].keys():
+        for stud1 in students_per_grade[i][k]:
+            for stud2 in students_per_grade[i][k]:
+                if (admission[stud1] < admission[stud2]):
+                    g.add_clause([squeeze_grades(stud1, i), -squeeze_grades(stud2, i)])
+
+# 3c
+
+
+
+
 for ib in range(len(coalitions)):
     for ibp in range(len(coalitions)):
-        if coalitions[ib].issubset(coalitions[ibp]):
+        if set(coalitions[ib]).issubset(set(coalitions[ibp])):
             g.add_clause(squeeze_coalitions(ibp), - squeeze_coalitions(ib))
 
 
