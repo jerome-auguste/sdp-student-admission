@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # Gophersat solver
-gophersat/
+gophersat.exe
 
 # VSCode settings
 .vscode/
