@@ -1,6 +1,7 @@
 """Utils file with funtions used in the project"""
 
 import numpy as np
+import subprocess
 
 def grades_support_per_crit(grade_record: np.ndarray) -> list:
     """Computes the (unique) existing grade values for each criterion
@@ -93,9 +94,4 @@ def exec_gophersat(filename: str,
 
     model = lines[2][2:].split(" ")
 
-    return (
-        True,
-        [int(x) for x in model if int(x) != 0],
-        {i2v[abs(int(v))]: int(v) > 0
-         for v in model if int(v) != 0},
-    )
+    return (True, model)
