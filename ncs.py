@@ -1,34 +1,30 @@
 """This module solves an NCS problem with a SAT Solver (gophersat.exe)"""
 
-import subprocess
-
 import numpy as np
 
 from generator import Generator
-from utils import grades_support_per_crit, subsets, clauses_to_dimacs, write_dimacs_file, exec_gophersat
-
-# TRAIN_SET_SIZE = 50
-# NUM_CLASSES = 3
-# gen = Generator(size=TRAIN_SET_SIZE, num_classes=NUM_CLASSES)
-
-# grades, admission = gen.generate()
-# print(
-#     f"Parameters:\nfrontier: {gen.frontier}\nelements: {dict(Counter(admission))}\n"
-# )
+from utils import *
 
 class NcsSatModel:
-    def __init__(self, generator: Generator, train_set: np.ndarray, labels: np.ndarray) -> None:
-        
+    """Non Compensatory Sorting model solved with gophersat SAT solver
+    (cf. https://arxiv.org/pdf/1710.10098.pdf)"""
+
+    def __init__(self, generator: Generator, train_set: np.ndarray,
+                 labels: np.ndarray) -> None:
+
         # Generator attributes
         self.train_set = train_set
         self.labels = labels
         self.gen = generator
-        
+
         # Reformatting variables
         self.coalitions = [tuple(el) for el in subsets(list(range(self.gen.num_criterions)))]
         self.grades_support = grades_support_per_crit(self.train_set)
-        
-        # Generating triplet values as mentioned in https://arxiv.org/pdf/1710.10098.pdf (Section 3.4, Definition 4 (SAT encoding for U-NCS))
+        self.datapoints_per_class = [[u for u in range(self.gen.size) if self.labels[u] == h]
+                            for h in range(self.gen.num_classes)]
+
+        # Generating triplet values as mentioned in
+        # Section 3.4,Definition 4 (SAT encoding for U-NCS)
         self.variables = {
             "frontier_var": [(i, h, k) for i in range(self.gen.num_criterions)
                              for h in range(self.gen.num_classes)
@@ -36,24 +32,33 @@ class NcsSatModel:
             "coalition_var":
             self.coalitions,
         }
-        
+
         # Encodes/Decodes variables defining the frontiers
+        # to/from int index (necessary according to gophersat)
         self.front_v2i = {v: i + 1 for i, v in enumerate(self.variables["frontier_var"])}
         self.front_i2v = {i: v for v, i in self.front_v2i.items()}
-        
-        # Encodes/Decodes variables defining the sufficient coalitions
+
+        # Encodes/Decodes variables defining the sufficient coalitions to/from int index
         self.coal_v2i = {
             v: i + len(self.front_i2v) + 1
-            for i, v in enumerate(variables["coalition_var"])
+            for i, v in enumerate(self.variables["coalition_var"])
         }  # Indexes are starting right above where frontier indexing stops
         self.coal_i2v = {i: v for v, i in self.coal_v2i.items()}
 
-        # Concatenates both encoding
+        # Concatenates both encoding for the solver
+        self.i2v = {}
         self.i2v.update(self.front_i2v)
         self.i2v.update(self.coal_i2v)
-    
+
     def clauses_3a(self) -> list:
-        # 3a Ascending scales
+        """Computes ascending scales clauses (named 3a in Definition 4)
+        (Evaluates values according to the frontiers (for each criterion))
+        For all criteria i, classes h and adjacent pairs of value k<k':
+        x_{i, h, k'} or -x_{i, h, k}
+
+        Returns:
+            list: clauses according to the formula
+        """
         clauses_3a = []
 
         # Not only adjacent values of k
@@ -68,7 +73,8 @@ class NcsSatModel:
         #                         -front_v2i[(i, h, sorted_grades[ik])]
         #                     ])
         #                     print(
-        #                         f"({i}, {h}, {sorted_grades[ikp]}) >  ({i}, {h}, {sorted_grades[ik]})"
+        #                         f"({i}, {h}, {sorted_grades[ikp]}) >
+        #                              ({i}, {h}, {sorted_grades[ik]})"
         #                     )
 
         # Only for adjacent values of k
@@ -85,10 +91,18 @@ class NcsSatModel:
                             self.front_v2i[(i, h, sorted_grades[ikp])],
                             -self.front_v2i[(i, h, sorted_grades[ik])],
                         ])
-        
+
         return clauses_3a
 
     def clauses_3b(self) -> list:
+        """Computes Hierarchy of profiles clauses (names 3b in Definition 4)
+        (Evaluates classes (frontier) according to each value)
+        For all criteria i, adjacent pairs of classes h<h', values k:
+        x_{i, h, k} or -x_{i, h', k}
+        
+        Returns:
+            list: clauses according to the formula
+        """
         # 3b Hierarchy of profiles
         clauses_3b = []
 
@@ -106,12 +120,19 @@ class NcsSatModel:
                 for h in range(self.gen.num_classes - 1):
                     clauses_3b.append(
                         [self.front_v2i[(i, h, k)], -self.front_v2i[(i, h + 1, k)]])
-        
+
         return clauses_3b
 
     def clauses_3c(self) -> list:
-        # 3c Coalitions strenghs
+        """Computes coalitions strength clauses (named 3c in Definition 4)
+        (Evaluates valid coalitions of criteria to classify the datapoints)
+        For all "adjacent" (difference is exactly 1 element)
+        pairs of coalitions (of criteria) B included in B'
+        y_{B'} or -y_B
 
+        Returns:
+            list: clauses according to the formula
+        """
         clause_3c = []
 
         # Not only for "adjacent" coalitions (difference is a singleton)
@@ -127,46 +148,70 @@ class NcsSatModel:
                 Bp = set(B).union(set([i]))
                 if Bp != set(B):
                     clause_3c.append([self.coal_v2i[tuple(Bp)], -self.coal_v2i[B]])
-        
+
         return clause_3c
 
     def clauses_3d(self) -> list:
-        # 3d Alternatives are outranked by boundary above them
-        students_per_class = [[u for u in range(self.gen.size) if self.admission[u] == h]
-                            for h in range(self.gen.num_classes)]  # Students per category
+        """Computes alternatives outranked by boundary above them clauses (named 3d in Definition 4)
+        (Ensures the correct representation of the assignment (labels))
+        For all coalition B, for all frontier h and all datapoint u assessed at class h-1
+        (OR_{i in B} -x_{i, h, u_i}) or -y_B
 
+        Returns:
+            list: clauses according to the formula
+        """
         clauses_3d = []
         for B in self.coalitions:
             for h in range(1, self.gen.num_classes):
-                for u in students_per_class[h - 1]:
-                    clauses_3d.append([-self.front_v2i[(i, h, self.grades[u, i])]
+                for u in self.datapoints_per_class[h - 1]:
+                    clauses_3d.append([-self.front_v2i[(i, h, self.train_set[u, i])]
                                     for i in B] + [-self.coal_v2i[B]])
-        
+
         return clauses_3d
-    
+
     def clauses_3e(self) -> list:
-        # 3e Alternatives outrank the boundary bellow them
+        """Computes alternatives outranked by boundary bellow them clauses
+        (named 3d in Definition 4)
+        (Ensures the correct representation of the assignment (labels))
+        For all coalition B, for all frontier h and all datapoint a assessed at class h-1
+        (OR_{i in B} x_{i, h, a_i}) or y_{N-B}
+
+        Returns:
+            list: clauses according to the formula
+        """
         clauses_3e = []
-        for B in coalitions:
-            for h in range(gen.num_classes):
-                for u in students_per_class[h]:
-                    N_minus_B = tuple(set(list(range(gen.num_criterions))) - set(B))
-                    clauses_3e.append([front_v2i[(i, h, grades[u, i])]
-                                    for i in B] + [coal_v2i[N_minus_B]])
+        for B in self.coalitions:
+            for h in range(self.gen.num_classes):
+                for a in self.datapoints_per_class[h]:
+                    N_minus_B = tuple(set(list(range(self.gen.num_criterions))) - set(B))
+                    clauses_3e.append([self.front_v2i[(i, h, self.train_set[a, i])]
+                                    for i in B] + [self.coal_v2i[N_minus_B]])
         return clauses_3e
 
 
     def solve(self) -> list:
-        MY_CLAUSES = self.clauses_3a() + self.clauses_3b() + self.clause_3c() + self.clauses_3d() + self.clauses_3e()
-        MY_DIMACS = clauses_to_dimacs(
-            MY_CLAUSES,
-            len(variables["frontier_var"]) + len(variables["coalition_var"]))
+        """Uses clasues defined above to encode the NCS problem
+        into a SAT problem, solved by gophersat
 
-        write_dimacs_file(MY_DIMACS, "workingfile.cnf")
+        Returns:
+            list: resulting frontiers between classes
+        """
+        my_clauses = self.clauses_3a() + self.clauses_3b() + self.clauses_3c(
+        ) + self.clauses_3d() + self.clauses_3e()
+        my_dimacs = clauses_to_dimacs(
+            my_clauses,
+            len(self.variables["frontier_var"]) + len(self.variables["coalition_var"]))
+
+        write_dimacs_file(my_dimacs, "workingfile.cnf")
         res = exec_gophersat("workingfile.cnf")
 
         # Résultat
-        is_sat, i_model, var_model = res
+        is_sat, model = res
+        index_model = [int(x) for x in model if int(x) != 0]
+        var_model = {
+            self.i2v[abs(int(v))]: int(v) > 0
+            for v in model if int(v) != 0
+        }
         front_results = [x for x in self.variables["frontier_var"] if var_model[x]]
         coal_results = [x for x in self.variables["coalition_var"] if var_model[x]]
 
@@ -182,10 +227,8 @@ class NcsSatModel:
             frontier.append(class_front)
 
         # print(f"Resulted frontiers: {frontier}")
-        return frontier
+        return frontier, coal_results
 
 # Quelles sont les valeurs possibles pour les notes k ? Entier uniquement ?
 
 # TODO: score results
-
-
