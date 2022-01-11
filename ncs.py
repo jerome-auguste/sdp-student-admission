@@ -23,7 +23,7 @@ class NcsSatModel:
         self.datapoints_per_class = [[u for u in range(self.gen.size) if self.labels[u] == h]
                             for h in range(self.gen.num_classes)]
 
-        # Generating triplet values as mentioned in
+        # Generating triplet (i, h, k) values as mentioned in
         # Section 3.4,Definition 4 (SAT encoding for U-NCS)
         self.variables = {
             "frontier_var": [(i, h, k) for i in range(self.gen.num_criterions)
@@ -189,7 +189,7 @@ class NcsSatModel:
         return clauses_3e
 
 
-    def solve(self) -> list:
+    def run_solver(self) -> list:
         """Uses clasues defined above to encode the NCS problem
         into a SAT problem, solved by gophersat
 
@@ -204,7 +204,12 @@ class NcsSatModel:
 
         write_dimacs_file(my_dimacs, "workingfile.cnf")
         res = exec_gophersat("workingfile.cnf")
-
+        
+        return res
+    
+    def solve(self):
+        res = self.run_solver()
+        
         # Results
         is_sat, model = res
         index_model = [int(x) for x in model if int(x) != 0]
@@ -225,6 +230,9 @@ class NcsSatModel:
                 if len(crit_res) > 0:
                     class_front.append(min(crit_res))
             frontier.append(class_front)
+        print("\nFrontier")
+        for el in frontier:
+            print(el)
         
         for coal in coal_results:
             print(f"For coalition: {coal}")
@@ -233,11 +241,12 @@ class NcsSatModel:
                 clf = 0
                 for crit in range(self.gen.num_criterions):
                     if crit in coal:
+                        # print(f"student[crit] = {student[crit]} \t frontier[h_1][crit] = {frontier[:][crit]} \t num_classes = {self.gen.num_classes}")
                         clf += sum([student[crit] > frontier[h_1][crit] for h_1 in range(self.gen.num_classes-1)])
                 pred = round(clf/self.gen.num_criterions)
                 coal_clf.append(pred == int(self.labels[i_stud]))
-                print(f"Predicted class: {pred} \t Real class: {int(self.labels[i_stud])}")
-            print(f"Accuracy = {sum(coal_clf)/len(coal_clf)*100} %")
+                # print(f"Predicted class: {pred} \t Real class: {int(self.labels[i_stud])}")
+            print(f"Accuracy = {sum(coal_clf)/len(coal_clf)*100:.0f} %")
                 
 
         # print(f"Resulted frontiers: {frontier}")
