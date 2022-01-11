@@ -7,12 +7,12 @@ from collections import Counter
 import pprint as pp
 
 
-train_set_size = 10
+train_set_size = 50
 num_classes = 3
 gen = Generator(size=train_set_size, num_classes=num_classes)
 
 grades,admission = gen.generate()
-print(f"Parameters:\nlambda: {gen.lmbda}\nweights: {gen.weights}\nfrontier: {gen.frontier}\nelements: {dict(Counter(admission))}\n")
+print(f"Parameters:\nfrontier: {gen.frontier}\nelements: {dict(Counter(admission))}\n")
 
 # Boolean dimensions x_(i, h, k):
 # - i is criterion (grades columns)
@@ -211,4 +211,19 @@ write_dimacs_file(myDimacs, "workingfile.cnf")
 res = exec_gophersat("workingfile.cnf")
 
 #Résultat
-pp.pprint(res)
+is_sat, i_model, var_model = res
+front_results = [x for x in variables["frontier_var"] if var_model[x]]
+coal_results = [x for x in variables["coalition_var"] if var_model[x]]
+
+print(f"Resulted sufficient coalitions: {coal_results}")
+
+frontier = []
+for h in range(1, num_classes):
+    class_front = []
+    for i in range(gen.num_criterions):
+        crit_res = [x[2] for x in front_results if x[0]==i and x[1]==h]
+        if len(crit_res) > 0:
+            class_front.append(min(crit_res))
+    frontier.append(class_front)
+
+print(f"Resulted frontiers: {frontier}")
