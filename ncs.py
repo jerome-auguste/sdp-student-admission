@@ -1,73 +1,53 @@
-import numpy as np
-import pprint as pp
+"""This module solves an NCS problem with a SAT Solver (gophersat.exe)"""
+
 import subprocess
-
 from collections import Counter
-from generator import Generator
-from itertools import product
-from numpy.core.fromnumeric import size
 
-train_set_size = 50
-num_classes = 3
-gen = Generator(size=train_set_size, num_classes=num_classes)
+import numpy as np
+
+from generator import Generator
+
+TRAIN_SET_SIZE = 50
+NUM_CLASSES = 3
+gen = Generator(size=TRAIN_SET_SIZE, num_classes=NUM_CLASSES)
 
 grades, admission = gen.generate()
 print(
     f"Parameters:\nfrontier: {gen.frontier}\nelements: {dict(Counter(admission))}\n"
 )
 
-# Boolean dimensions x_(i, h, k):
-# - i is criterion (grades columns)
-# - h is (ordered) class number (admission value)
-# - k value taken for a criterion (grades value)
 
-# y_B:
-# - B coalition of criteria (B included in N)
+def grades_support_per_crit(grade_record: np.array) -> list:
+    """Computes the (unique) existing grade values for each criterion
 
-# Generate the indexes of the students belonging to each class as a dict
-# students_per_class = {}
-# for cat in range(gen.num_classes):
-#     students_per_class[cat] = []
-#     for student in range (train_set_size):
-#             if admission[student] == cat:
-#                 students_per_class[cat].append(student)
+    Args:
+        grade_record (np.array): generated grades array (from Generator)
 
-# pp.pprint(students_per_class)
-
-# Generate the indexes of the students per grade for each criterion
-# students_per_grade = {}
-# for i in range(gen.num_criterions):
-#     students_per_grade[i] = {}
-#     grades_list = [grades[student][i] for student in range(train_set_size)]
-#     grades_set = set(grades_list)
-#     for grade in grades_set:
-#         students_per_grade[i][grade] = [s for s, g in enumerate(grades_list) if g == grade]
-
-# pp.pprint(students_per_grade)
-
-# The list format of the boolean value is i + student_index*num_criterias + 1 (in range(1,train_set_size*num_criterias))
-# def squeezed_grades_index(student_index: int, i: int) -> int:
-#     return i + student_index*gen.num_criterions + 1
-
-# def squeezed_coalitions_index(coalition_index: int) -> int:
-#     return train_set_size*gen.num_criterions + coalition_index
-
-
-def grades_support_per_crit(grades: np.array):
+    Returns:
+        list: ordered lists of unique grades for each criterion
+    """
     grades_set = []
-    for i in range(gen.num_criterions):
+    for crit in range(gen.num_criterions):
         grades_set.append(
             sorted(
-                list(set([grades[stud, i]
-                          for stud in range(grades.shape[0])]))))
+                list(set([grade_record[stud, crit]
+                          for stud in range(grade_record.shape[0])]))))
     return grades_set
 
 
 def subsets(criteria: list) -> list:
+    """Generic function to generate all subsets of a subset
+
+    Args:
+        criteria (list): set of elements
+
+    Returns:
+        list: all subsets
+    """
     if criteria == []:
         return [[]]
-    x = subsets(criteria[1:])
-    return x + [[criteria[0]] + y for y in x]
+    subset = subsets(criteria[1:])
+    return subset + [[criteria[0]] + y for y in subset]
 
 
 # Create variables/boolean value encoder
@@ -76,7 +56,7 @@ grades_support = grades_support_per_crit(grades)
 
 variables = {
     "frontier_var": [(i, h, k) for i in range(gen.num_criterions)
-                     for h in range(num_classes) for k in grades_support[i]],
+                     for h in range(NUM_CLASSES) for k in grades_support[i]],
     "coalition_var":
     coalitions,
 }
@@ -103,17 +83,22 @@ clauses_3a = []
 # Not only adjacent values of k
 # for i in range(gen.num_criterions):
 #     sorted_grades = sorted(grades_support[i])
-#     for h in range(num_classes):
+#     for h in range(NUM_CLASSES):
 #         for ik in range(len(sorted_grades)):
-#             for ikp in range(ik+1, len(sorted_grades[ik+1:])):
+#             for ikp in range(ik + 1, len(sorted_grades[ik + 1:])):
 #                 if sorted_grades[ik] < sorted_grades[ikp]:
-#                     clauses_3a.append([front_v2i[(i, h, sorted_grades[ikp])], -front_v2i[(i, h, sorted_grades[ik])]])
-#                     # print(f"({i}, {h}, {sorted_grades[ikp]}) >  ({i}, {h}, {sorted_grades[ik]})")
+#                     clauses_3a.append([
+#                         front_v2i[(i, h, sorted_grades[ikp])],
+#                         -front_v2i[(i, h, sorted_grades[ik])]
+#                     ])
+#                     print(
+#                         f"({i}, {h}, {sorted_grades[ikp]}) >  ({i}, {h}, {sorted_grades[ik]})"
+#                     )
 
 # Only for adjacent values of k
 for i in range(gen.num_criterions):
     sorted_grades = sorted(grades_support[i])
-    for h in range(num_classes):
+    for h in range(NUM_CLASSES):
         for ik in range(len(sorted_grades) - 1):
             ikp = ik + 1
             while ikp < len(
@@ -132,15 +117,15 @@ clauses_3b = []
 # Not only for adjacent values
 # for i in range(gen.num_criterions):
 #     for k in set(grades_support[i]):
-#         for h in range(num_classes-1):
-#             for hp in range(h+1, num_classes):
+#         for h in range(NUM_CLASSES-1):
+#             for hp in range(h+1, NUM_CLASSES):
 #                 clauses_3b.append([front_v2i[(i, h, k)], -front_v2i[(i, hp, k)]])
 #                 # print(f"({i}, {h}, {k}) < ({i}, {hp}, {k})")
 
 # Only for adjacent values
 for i in range(gen.num_criterions):
     for k in set(grades_support[i]):
-        for h in range(num_classes - 1):
+        for h in range(NUM_CLASSES - 1):
             clauses_3b.append(
                 [front_v2i[(i, h, k)], -front_v2i[(i, h + 1, k)]])
             # print(f"({i}, {h}, {k}) < ({i}, {h+1}, {k})")
@@ -165,12 +150,12 @@ for B in coalitions:
             # print(f"{B} is adjacent subset of {tuple(Bp)}")
 
 # 3d Alternatives are outranked by boundary above them
-students_per_class = [[u for u in range(train_set_size) if admission[u] == h]
-                      for h in range(num_classes)]  # Students per category
+students_per_class = [[u for u in range(TRAIN_SET_SIZE) if admission[u] == h]
+                      for h in range(NUM_CLASSES)]  # Students per category
 
 clauses_3d = []
 for B in coalitions:
-    for h in range(1, num_classes):
+    for h in range(1, NUM_CLASSES):
         for u in students_per_class[h - 1]:
             clauses_3d.append([-front_v2i[(i, h, grades[u, i])]
                                for i in B] + [-coal_v2i[B]])
@@ -179,7 +164,7 @@ for B in coalitions:
 # 3e Alternatives outrank the boundary bellow them
 clauses_3e = []
 for B in coalitions:
-    for h in range(num_classes):
+    for h in range(NUM_CLASSES):
         for u in students_per_class[h]:
             N_minus_B = tuple(set(list(range(gen.num_criterions))) - set(B))
             clauses_3e.append([front_v2i[(i, h, grades[u, i])]
@@ -188,11 +173,18 @@ for B in coalitions:
 
 # Quelles sont les valeurs possibles pour les notes k ? Entier uniquement ?
 
-# ------------------------------------------- TODO: score results -------------------------------------------
-# Construction du DIMCS et Résolution
+# -------------------------------------- TODO: score results --------------------------------------
+# Construction du DIMACS et Résolution
+def clauses_to_dimacs(clauses: list, numvar: int) -> str:
+    """Generates gophersat interpretable clauses (in cnf)
 
+    Args:
+        clauses (list): clauses to be parsed
+        numvar (int): number of variable in the problem
 
-def clauses_to_dimacs(clauses, numvar):
+    Returns:
+        str: parsed clauses for gophersat
+    """
     dimacs = ("c SAT encoded NCS problem \np cnf " + str(numvar) + " " +
               str(len(clauses)) + "\n")
     for clause in clauses:
@@ -202,15 +194,34 @@ def clauses_to_dimacs(clauses, numvar):
     return dimacs
 
 
-def write_dimacs_file(dimacs, filename):
-    with open(filename, "w", newline="") as cnf:
+def write_dimacs_file(dimacs: str, filename: str):
+    """Writes the generated string from clauses_to_dimacs function to a .cnf file
+
+    Args:
+        dimacs (str): generated string
+        filename (str): file to save the string to
+    """
+    with open(filename, "w", newline="", encoding='utf8') as cnf:
         cnf.write(dimacs)
 
 
-# Attention à utiliser la vesion du solveur compatible avec votre système d'exploitation, mettre le solveur dans le même dossier que ce notebook
+# Attention à utiliser la vesion du solveur compatible avec votre système d'exploitation,
+# mettre le solveur dans le même dossier que ce notebook
+def exec_gophersat(filename: str,
+                   cmd: str = "./gophersat.exe",
+                   encoding: str = "utf8") -> tuple[bool, list, dict]:
+    """Executes gophersat on parsed text file (usually in .cnf)
 
+    Args:
+        filename (str): file to read clauses from
+        cmd (str, optional): path to gophersat executable. Defaults to "./gophersat.exe".
+        encoding (str, optional): encoding of the text file. Defaults to "utf8".
 
-def exec_gophersat(filename, cmd="./gophersat.exe", encoding="utf8"):
+    Returns:
+        tuple[bool, list, dict]: ("is it satisfiable",
+                                    "model over index",
+                                    "assigns to each variable a boolean value")
+    """
     result = subprocess.run([cmd, filename],
                             stdout=subprocess.PIPE,
                             check=True,
@@ -231,12 +242,12 @@ def exec_gophersat(filename, cmd="./gophersat.exe", encoding="utf8"):
     )
 
 
-myClauses = clauses_3a + clauses_3b + clause_3c + clauses_3d + clauses_3e
-myDimacs = clauses_to_dimacs(
-    myClauses,
+MY_CLAUSES = clauses_3a + clauses_3b + clause_3c + clauses_3d + clauses_3e
+MY_DIMACS = clauses_to_dimacs(
+    MY_CLAUSES,
     len(variables["frontier_var"]) + len(variables["coalition_var"]))
 
-write_dimacs_file(myDimacs, "workingfile.cnf")
+write_dimacs_file(MY_DIMACS, "workingfile.cnf")
 res = exec_gophersat("workingfile.cnf")
 
 # Résultat
@@ -247,7 +258,7 @@ coal_results = [x for x in variables["coalition_var"] if var_model[x]]
 print(f"Resulted sufficient coalitions: {coal_results}")
 
 frontier = []
-for h in range(1, num_classes):
+for h in range(1, NUM_CLASSES):
     class_front = []
     for i in range(gen.num_criterions):
         crit_res = [x[2] for x in front_results if x[0] == i and x[1] == h]
