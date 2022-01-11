@@ -205,7 +205,7 @@ class NcsSatModel:
         write_dimacs_file(my_dimacs, "workingfile.cnf")
         res = exec_gophersat("workingfile.cnf")
 
-        # Résultat
+        # Results
         is_sat, model = res
         index_model = [int(x) for x in model if int(x) != 0]
         var_model = {
@@ -225,6 +225,20 @@ class NcsSatModel:
                 if len(crit_res) > 0:
                     class_front.append(min(crit_res))
             frontier.append(class_front)
+        
+        for coal in coal_results:
+            print(f"For coalition: {coal}")
+            coal_clf = []
+            for i_stud, student in enumerate(self.train_set):
+                clf = 0
+                for crit in range(self.gen.num_criterions):
+                    if crit in coal:
+                        clf += sum([student[crit] > frontier[h_1][crit] for h_1 in range(self.gen.num_classes-1)])
+                pred = round(clf/self.gen.num_criterions)
+                coal_clf.append(pred == int(self.labels[i_stud]))
+                print(f"Predicted class: {pred} \t Real class: {int(self.labels[i_stud])}")
+            print(f"Accuracy = {sum(coal_clf)/len(coal_clf)*100} %")
+                
 
         # print(f"Resulted frontiers: {frontier}")
         return frontier, coal_results
