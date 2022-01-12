@@ -16,6 +16,7 @@ class Generator():
         self.frontier = frontier
         if frontier is None:
             self.frontier = self.init_frontier()
+        self.grades, self.admission = self.generate()
 
     def init_weights(self) -> np.ndarray:
         #Genère les poids selon une distrib normale pour qu'ils ne soient pas trop différents
@@ -53,7 +54,7 @@ class Generator():
         return passed
 
     def generate(self):
-        # génère les notes et les labels associés.
+        # génère les notes et les labels
         grades = np.random.uniform(0,20,(self.size,self.num_criterions))
         return grades,self.label(grades)
 
