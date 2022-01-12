@@ -9,14 +9,14 @@ class MRSort:
     def __init__(self, generator):
         self.gen = generator
         self.nb_split = generator.num_classes - 1
-        self.grades, self.admission = generator.generate()
+        self.grades, self.admission = generator.grades, generator.admission
         self.model = Model("MR-sort")
         self.objective = None
 
         # Constants
         self.nb_ech = self.gen.size
         self.nb_notes = self.gen.num_criterions
-        
+
         # Gurobi variables
         self.alpha = self.model.addVar()
         self.x = self.model.addMVar(shape=self.nb_ech) # slack for each student (in A*)
@@ -28,7 +28,7 @@ class MRSort:
 
         self.c = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), lb=0, ub=1)
         self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), vtype=GRB.BINARY)
-    
+
     def solve(self):
         if self.objective == None:
             return False
@@ -53,7 +53,7 @@ class MRSort:
         res = np.zeros((self.nb_ech))
         for i in range(self.nb_split):
             res += ((self.grades > self.b.X[:,i])*self.w.X).sum(axis=1) > self.lmbda.X
-  
+
         print(f"Resultats:\n",
             f"- alpha: {self.alpha.X}\n",
             f"- lambda: {self.lmbda.X}\n",
@@ -61,7 +61,7 @@ class MRSort:
             f"- resultats: {dict(Counter(res))}\n",
             f"- precision: {sum([res[i]==self.admission[i] for i in range(len(res))])/len(res)}\n"
         )
-            
+
 
     def set_constraint(self):
         epsilon = 1e-9
@@ -98,7 +98,7 @@ class MRSort:
             for j,h in product(range(self.nb_ech), range(self.nb_split)) if h == self.admission[j] or h+1 == self.admission[j]
         )
         self.model.addConstr(quicksum(self.w[k] for k in range(self.nb_notes)) == 1)
-    
+
         self.objective = self.alpha
 
 
