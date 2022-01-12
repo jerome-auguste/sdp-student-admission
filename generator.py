@@ -3,7 +3,7 @@ import numpy as np
 from random import uniform
 from sklearn.model_selection import train_test_split
 class Generator():
-    def __init__(self,size:int = 1000,size_test:float = 0.2,num_classes:int= 2,num_criterions:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None) -> None:
+    def __init__(self,size:int = 1000,size_test:float = 0.2,num_classes:int= 2,num_criterions:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None, noisy = False) -> None:
         """
         Classe principale générant un dataset et les labels associés.
         La génération se fait a l'initialisation et stocke dans les attributs grades et labels les
@@ -31,7 +31,7 @@ class Generator():
         self.frontier = frontier
         if frontier is None:
             self.frontier = self.init_frontier()
-        self.grades, self.admission, self.grades_test, self.admission_test = self.generate()
+        self.grades, self.admission, self.grades_test, self.admission_test = self.generate(noisy=noisy)
 
     def init_weights(self) -> np.ndarray:
         #Genère les poids selon une distrib normale pour qu'ils ne soient pas trop différents
@@ -68,11 +68,15 @@ class Generator():
             passed += ((grades > frontier)*self.weights).sum(axis=1) > self.lmbda
         return passed
 
-    def generate(self):
+    def generate(self, noisy):
         # génère les notes et les labels
         grades = np.random.uniform(0,20,(self.size,self.num_criterions))
         labels = self.label(grades)
         grades, labels, grades_test, labels_test = train_test_split(grades,labels,test_size=self.size_test)
+        if noisy:
+            index_noisy = np.random.choice([i for i in range(len(labels))],size=np.random.randint(len(labels)//3))
+            for index in index_noisy:
+                labels[index] = np.random.randint(0,self.num_classes+1)
         return grades, labels, grades_test, labels_test
 
 # %%
