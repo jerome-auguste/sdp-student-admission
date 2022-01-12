@@ -98,15 +98,24 @@ def exec_gophersat(filename: str,
     return (True, model)
 
 
-def print_res(gen, compute_time, res_train, res_test=None):
+def print_res(admission, compute_time, res_train, res_test=None):
+    """
+    Print results and accuracy of a solver.
+
+    Args:
+        admission: array of category for each sample (ground truth)
+        compute_time: computing time spent
+        res_train: array of category found by the solver for each sample of the train set
+        res_data: array of category found by the solver for each sample of the test set
+    """
     print(f"Resultats:\n",
         "- temps de calcul: {:.3f}s\n".format(compute_time),
         f"- Sur le train set:\n",
         f"  - elements par categorie: {dict(Counter(res_train))}\n",
-        f"  - precision: {sum([res_train[i]==gen.admission[i] for i in range(len(res_train))])/len(res_train)}"
+        f"  - precision: {sum([res_train[i]==admission[i] for i in range(len(res_train))])/len(res_train)}"
     )
     if res_test:
         print(f"- Sur le test set (generalisation):\n",
             f"  - elements par categorie: {dict(Counter(res_test))}\n",
-            f"  - precision: {sum([res_test[i]==gen.admission[i] for i in range(len(res_test))])/len(res_test)}\n"
+            f"  - precision: {sum([res_test[i]==admission[i] for i in range(len(res_test))])/len(res_test)}\n"
         )

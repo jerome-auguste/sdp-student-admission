@@ -60,6 +60,9 @@ class Generator():
         return grades,self.label(grades)
 
     def display(self):
+        """
+        Print the parameters used by the generator.
+        """
         print(f"Parameters du generateur:\n",
             f"- size: {self.size}\n",
             f"- lambda: {self.lmbda}\n",

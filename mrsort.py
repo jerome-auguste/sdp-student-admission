@@ -8,6 +8,12 @@ np.set_printoptions(precision=2)
 
 class MRSort:
     def __init__(self, generator):
+        """
+        Initialize the MR-Sort solver.
+
+        Args:
+            generator: Generator object, generating samples used to train the model
+        """
         self.gen = generator
         self.nb_split = generator.num_classes - 1
         self.grades, self.admission = generator.grades, generator.admission
@@ -31,6 +37,13 @@ class MRSort:
         self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), vtype=GRB.BINARY)
 
     def solve(self):
+        """
+        Solve the MR-Sort problem.
+
+        return:
+            - np.array: category found by the solver for each sample
+            - int: compute time in secondes
+        """
         start = time()
         if self.objective == None:
             return (None, 0)
@@ -49,6 +62,9 @@ class MRSort:
         return res, compute_time
 
     def print_params(self):
+        """
+        Print the parameters found by the MR-Sort solver.
+        """
         print(f"Parametres trouves par MR-Sort:\n",
             f"- alpha: {self.alpha.X}\n",
             f"- lambda: {self.lmbda.X}\n",
@@ -57,6 +73,9 @@ class MRSort:
 
 
     def set_constraint(self):
+        """
+        Set the constraints for the MR-Sort solver.
+        """
         epsilon = 1e-9
         M = 1e2 # superieur a l'ecart max, 20
 
