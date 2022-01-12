@@ -3,22 +3,22 @@
 import numpy as np
 import subprocess
 
-def grades_support_per_crit(grade_record: np.ndarray) -> list:
-    """Computes the (unique) existing grade values for each criterion
+def possible_values_per_crit(values_record: np.ndarray) -> list:
+    """Computes the (unique) existing values for each criterion
 
     Args:
-        grade_record (np.ndarray): generated grades array (from Generator)
+        values_record (np.ndarray): generated grades array (from Generator)
 
     Returns:
-        list: ordered lists of unique grades for each criterion
+        list: sorted lists of unique grades for each criterion
     """
-    grades_set = []
-    for crit in range(len(grade_record[0])):
-        grades_set.append(
+    values_set = []
+    for crit in range(len(values_record[0])):
+        values_set.append(
             sorted(
-                list(set([grade_record[stud, crit]
-                        for stud in range(grade_record.shape[0])]))))
-    return grades_set
+                list({values_record[stud, crit]
+                        for stud in range(values_record.shape[0])})))
+    return values_set
 
 def subsets(criteria: list) -> list:
     """Generic function to generate all subsets of a subset
