@@ -1,9 +1,11 @@
 #%%
 import numpy as np
 from random import uniform
+from collections import Counter
 from sklearn.model_selection import train_test_split
+
 class Generator():
-    def __init__(self,size:int = 1000,size_test:float = 0.2,num_classes:int= 2,num_criterions:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None, noisy = False) -> None:
+    def __init__(self,size:int = 100,num_classes:int= 2,num_criterions:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None, size_test:float = 0.2, noisy = False) -> None:
         """
         Classe principale générant un dataset et les labels associés.
         La génération se fait a l'initialisation et stocke dans les attributs grades et labels les
@@ -72,11 +74,23 @@ class Generator():
         # génère les notes et les labels
         grades = np.random.uniform(0,20,(self.size,self.num_criterions))
         labels = self.label(grades)
-        grades, labels, grades_test, labels_test = train_test_split(grades,labels,test_size=self.size_test)
+        grades, grades_test, labels, labels_test = train_test_split(grades,labels,test_size=self.size_test)
         if noisy:
             index_noisy = np.random.choice([i for i in range(len(labels))],size=np.random.randint(len(labels)//3))
             for index in index_noisy:
                 labels[index] = np.random.randint(0,self.num_classes+1)
         return grades, labels, grades_test, labels_test
+
+    def display(self):
+        """
+        Print the parameters used by the generator.
+        """
+        print(f"Parameters du generateur:\n",
+            f"- size: {self.size}\n",
+            f"- lambda: {self.lmbda}\n",
+            f"- weights: {self.weights}\n",
+            f"- frontier: {self.frontier}\n",
+            f"- echantillons par categorie: {dict(Counter(self.admission))}\n"
+        )
 
 # %%

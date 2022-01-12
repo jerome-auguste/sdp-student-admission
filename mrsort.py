@@ -1,12 +1,19 @@
 from gurobipy import *
 import numpy as np
 from numpy.core.fromnumeric import shape
-from collections import Counter
 from itertools import product
+from time import time
+
 np.set_printoptions(precision=2)
 
 class MRSort:
     def __init__(self, generator):
+        """
+        Initialize the MR-Sort solver.
+
+        Args:
+            generator: Generator object, generating samples used to train the model
+        """
         self.gen = generator
         self.nb_split = generator.num_classes - 1
         self.grades, self.admission = generator.grades, generator.admission
@@ -14,7 +21,7 @@ class MRSort:
         self.objective = None
 
         # Constants
-        self.nb_ech = self.gen.size
+        self.nb_ech = len(self.admission)
         self.nb_notes = self.gen.num_criterions
 
         # Gurobi variables
@@ -30,40 +37,51 @@ class MRSort:
         self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), vtype=GRB.BINARY)
 
     def solve(self):
+        """
+        Solve the MR-Sort problem.
+
+        return:
+            - np.array: category found by the solver for each sample
+            - int: compute time in secondes
+        """
+        start = time()
         if self.objective == None:
-            return False
+            return (None, 0)
+
         self.model.update()
         self.model.setObjective(self.objective, GRB.MAXIMIZE)
         self.model.params.outputflag = 0 # (mode mute)
         self.model.optimize()
 
         if self.model.status != GRB.OPTIMAL:
-            return False
-        return True
-
-    def print_data(self):
-        print(f"Parameters:\n",
-            f"- lambda: {self.gen.lmbda}\n",
-            f"- weights: {self.gen.weights}\n",
-            f"- frontier: {self.gen.frontier}\n",
-            f"- echantillons: {dict(Counter(self.admission))}\n"
-        )
-
-    def print_res(self):
+            return (None, 0)
+        compute_time = time() - start
         res = np.zeros((self.nb_ech))
         for i in range(self.nb_split):
             res += ((self.grades > self.b.X[:,i])*self.w.X).sum(axis=1) > self.lmbda.X
+        return res, compute_time
 
-        print(f"Resultats:\n",
+    def test(self):
+        res = np.zeros((len(self.gen.grades_test)))
+        for i in range(self.nb_split):
+            res += ((self.gen.grades_test > self.b.X[:,i])*self.w.X).sum(axis=1) > self.lmbda.X
+        return res
+
+    def print_params(self):
+        """
+        Print the parameters found by the MR-Sort solver.
+        """
+        print(f"Parametres trouves par MR-Sort:\n",
             f"- alpha: {self.alpha.X}\n",
             f"- lambda: {self.lmbda.X}\n",
             f"- weights: {self.w.X}\n",
-            f"- resultats: {dict(Counter(res))}\n",
-            f"- precision: {sum([res[i]==self.admission[i] for i in range(len(res))])/len(res)}\n"
         )
 
 
     def set_constraint(self):
+        """
+        Set the constraints for the MR-Sort solver.
+        """
         epsilon = 1e-9
         M = 1e2 # superieur a l'ecart max, 20
 
