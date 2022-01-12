@@ -61,6 +61,12 @@ class MRSort:
             res += ((self.grades > self.b.X[:,i])*self.w.X).sum(axis=1) > self.lmbda.X
         return res, compute_time
 
+    def test(self):
+        res = np.zeros((len(self.gen.grades_test)))
+        for i in range(self.nb_split):
+            res += ((self.gen.grades_test > self.b.X[:,i])*self.w.X).sum(axis=1) > self.lmbda.X
+        return res
+
     def print_params(self):
         """
         Print the parameters found by the MR-Sort solver.

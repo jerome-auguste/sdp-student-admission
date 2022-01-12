@@ -114,7 +114,7 @@ def print_res(compute_time, res_train, admission, res_test=None, admission_test=
         f"  - elements par categorie: {dict(Counter(res_train))}\n",
         f"  - precision: {sum([res_train[i]==admission[i] for i in range(len(res_train))])/len(res_train)}"
     )
-    if res_test:
+    if res_test is not None:
         print(f"- Sur le test set (generalisation):\n",
             f"  - elements par categorie: {dict(Counter(res_test))}\n",
             f"  - precision: {sum([res_test[i]==admission_test[i] for i in range(len(res_test))])/len(res_test)}\n"

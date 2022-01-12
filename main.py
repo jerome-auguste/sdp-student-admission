@@ -14,7 +14,11 @@ if __name__=='__main__':
     mrs = MRSort(gen)
     mrs.set_constraint()
     res, compute_time = mrs.solve()
-    print_res(compute_time, res, gen.admission)
+    print_res(
+        compute_time,
+        res, gen.admission,
+        mrs.test(), gen.admission_test
+    )
 
     # NCS
     print("\nNCS")
