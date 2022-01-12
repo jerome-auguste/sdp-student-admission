@@ -98,7 +98,7 @@ def exec_gophersat(filename: str,
     return (True, model)
 
 
-def print_res(admission, compute_time, res_train, res_test=None):
+def print_res(compute_time, res_train, admission, res_test=None, admission_test=None):
     """
     Print results and accuracy of a solver.
 
@@ -117,5 +117,5 @@ def print_res(admission, compute_time, res_train, res_test=None):
     if res_test:
         print(f"- Sur le test set (generalisation):\n",
             f"  - elements par categorie: {dict(Counter(res_test))}\n",
-            f"  - precision: {sum([res_test[i]==admission[i] for i in range(len(res_test))])/len(res_test)}\n"
+            f"  - precision: {sum([res_test[i]==admission_test[i] for i in range(len(res_test))])/len(res_test)}\n"
         )

@@ -21,7 +21,7 @@ class MRSort:
         self.objective = None
 
         # Constants
-        self.nb_ech = self.gen.size
+        self.nb_ech = len(self.admission)
         self.nb_notes = self.gen.num_criterions
 
         # Gurobi variables
