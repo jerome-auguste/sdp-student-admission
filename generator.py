@@ -1,6 +1,7 @@
 #%%
 import numpy as np
 from random import uniform
+from collections import Counter
 
 class Generator():
     def __init__(self,size:int = 1000,num_classes:int= 2,num_criterions:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None) -> None:
@@ -57,5 +58,14 @@ class Generator():
         # génère les notes et les labels
         grades = np.random.uniform(0,20,(self.size,self.num_criterions))
         return grades,self.label(grades)
+
+    def display(self):
+        print(f"Parameters du generateur:\n",
+            f"- size: {self.size}\n",
+            f"- lambda: {self.lmbda}\n",
+            f"- weights: {self.weights}\n",
+            f"- frontier: {self.frontier}\n",
+            f"- echantillons par categorie: {dict(Counter(self.admission))}\n"
+        )
 
 # %%

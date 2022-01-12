@@ -2,6 +2,7 @@
 
 import numpy as np
 import subprocess
+from collections import Counter
 
 def possible_values_per_crit(values_record: np.ndarray) -> list:
     """Computes the (unique) existing values for each criterion
@@ -95,3 +96,17 @@ def exec_gophersat(filename: str,
     model = lines[2][2:].split(" ")
 
     return (True, model)
+
+
+def print_res(gen, compute_time, res_train, res_test=None):
+    print(f"Resultats:\n",
+        "- temps de calcul: {:.3f}s\n".format(compute_time),
+        f"- Sur le train set:\n",
+        f"  - elements par categorie: {dict(Counter(res_train))}\n",
+        f"  - precision: {sum([res_train[i]==gen.admission[i] for i in range(len(res_train))])/len(res_train)}"
+    )
+    if res_test:
+        print(f"- Sur le test set (generalisation):\n",
+            f"  - elements par categorie: {dict(Counter(res_test))}\n",
+            f"  - precision: {sum([res_test[i]==gen.admission[i] for i in range(len(res_test))])/len(res_test)}\n"
+        )

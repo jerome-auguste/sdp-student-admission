@@ -1,8 +1,9 @@
 from gurobipy import *
 import numpy as np
 from numpy.core.fromnumeric import shape
-from collections import Counter
 from itertools import product
+from time import time
+
 np.set_printoptions(precision=2)
 
 class MRSort:
@@ -30,36 +31,28 @@ class MRSort:
         self.d = self.model.addMVar(shape=(self.nb_ech, self.nb_notes, self.nb_split), vtype=GRB.BINARY)
 
     def solve(self):
+        start = time()
         if self.objective == None:
-            return False
+            return (None, 0)
+
         self.model.update()
         self.model.setObjective(self.objective, GRB.MAXIMIZE)
         self.model.params.outputflag = 0 # (mode mute)
         self.model.optimize()
 
         if self.model.status != GRB.OPTIMAL:
-            return False
-        return True
-
-    def print_data(self):
-        print(f"Parameters:\n",
-            f"- lambda: {self.gen.lmbda}\n",
-            f"- weights: {self.gen.weights}\n",
-            f"- frontier: {self.gen.frontier}\n",
-            f"- echantillons: {dict(Counter(self.admission))}\n"
-        )
-
-    def print_res(self):
+            return (None, 0)
+        compute_time = time() - start
         res = np.zeros((self.nb_ech))
         for i in range(self.nb_split):
             res += ((self.grades > self.b.X[:,i])*self.w.X).sum(axis=1) > self.lmbda.X
+        return res, compute_time
 
-        print(f"Resultats:\n",
+    def print_params(self):
+        print(f"Parametres trouves par MR-Sort:\n",
             f"- alpha: {self.alpha.X}\n",
             f"- lambda: {self.lmbda.X}\n",
             f"- weights: {self.w.X}\n",
-            f"- resultats: {dict(Counter(res))}\n",
-            f"- precision: {sum([res[i]==self.admission[i] for i in range(len(res))])/len(res)}\n"
         )
 
 
