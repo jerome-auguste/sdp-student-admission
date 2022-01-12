@@ -1,14 +1,29 @@
 #%%
 import numpy as np
 from random import uniform
-
+from sklearn.model_selection import train_test_split
 class Generator():
-    def __init__(self,size:int = 1000,num_classes:int= 2,num_criterions:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None) -> None:
+    def __init__(self,size:int = 1000,size_test:float = 0.2,num_classes:int= 2,num_criterions:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None) -> None:
+        """
+        Classe principale générant un dataset et les labels associés.
+        La génération se fait a l'initialisation et stocke dans les attributs grades et labels les
+        données générées (pour conserver les datasets pour la reproductibilité)
+        KArgs :
+            - size (int) : taille du dataset
+            - num_classes (int) : nombre de classes a générer. Il y'aura num_classes-1 frontiers
+            - num_criterions (int) : nombre de critères (ou notes par exemple). On tire ces notes selon une distrib uniforme entre 0 et 20
+            - lmbda (float) : lambda définissant la "majorité" pour le modèle MR-Sort
+
+        Attributs intéressants :
+            - .grades : notes générées
+            - .admission : labels générées
+        """
+        self.size_test = size_test
         self.size = size
         self.lmbda = lmbda
         self.num_classes = num_classes
         self.num_criterions = num_criterions
-        if lmbda is None:
+        if lmbda is None or lmbda > 1 or lmbda < 0:
             self.lmbda = uniform(0.5,1)
         self.weights = weights
         if weights is None:
@@ -16,7 +31,7 @@ class Generator():
         self.frontier = frontier
         if frontier is None:
             self.frontier = self.init_frontier()
-        self.grades, self.admission = self.generate()
+        self.grades, self.admission, self.grades_test, self.admission_test = self.generate()
 
     def init_weights(self) -> np.ndarray:
         #Genère les poids selon une distrib normale pour qu'ils ne soient pas trop différents
@@ -56,6 +71,8 @@ class Generator():
     def generate(self):
         # génère les notes et les labels
         grades = np.random.uniform(0,20,(self.size,self.num_criterions))
-        return grades,self.label(grades)
+        labels = self.label(grades)
+        grades, labels, grades_test, labels_test = train_test_split(grades,labels,test_size=self.size_test)
+        return grades, labels, grades_test, labels_test
 
 # %%
