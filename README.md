@@ -104,7 +104,7 @@ We define values for each class, each criteriion and each value (grade) of the t
 We then define clauses that model the properties and the hypothesis that the training set should respect (eg. ordered classes $`C^1 \prec ... \prec C^p`$)
 A state of the art sat solver (gophersat) is then used to find a model for the solution, which is then decoded to be interpreted.
 
-## Encoding the problem
+### Encoding the problem
 
 We define 2 types of boolean variable to be used to model our problem:
 
@@ -116,5 +116,5 @@ Different clauses are then created, defining the rules our solver will respect:
 - $`\forall i \in \mathcal{N}, \forall 1 \leq h \leq p-1, \forall k<k', \quad x_{i, h, k} \Rightarrow x_{i, h, k'}`$ (We can only consider adjacent grades)
 - $`\forall i \in \mathcal{N}, \forall 1 \leq h < h' \leq p-1, \forall k, \quad x_{i, h, k} \Rightarrow x_{i, h', k'}`$ (we can only consider adjacent boundaries)
 - $`\forall B \subset B' \subseteq \mathcal{N}, \quad y_{B} \Rightarrow y_{B'}`$ (We can only consider $`B`$ and  $`B'`$ such that  $`|B' \setminus B| = 1`$)
-- $`\forall B \subseteq \mathcal{N}, forall 1 \leq h \leq p-1 \forall u \in \mathds{X}^*: A(u) = C^{h-1}, \quad \bigwedge_{i \in B}{x_{i, h, u_i}} \Rightarrow \neg y_B`$
-- $`\forall B \subseteq \mathcal{N}, forall 1 \leq h \leq p-1 \forall a \in \mathds{X}^*: A(a) = C^{h-1}, \quad \bigwedge_{i \in B}{\neg x_{i, h, a_i}} \Rightarrow y_{\mathcal{N} \setminus B}`$
+- $`\forall B \subseteq \mathcal{N}, forall 1 \leq h \leq p-1 \forall u \in X^*: A(u) = C^{h-1}, \quad \bigwedge_{i \in B}{x_{i, h, u_i}} \Rightarrow \neg y_B`$
+- $`\forall B \subseteq \mathcal{N}, forall 1 \leq h \leq p-1 \forall a \in X^*: A(a) = C^{h-1}, \quad \bigwedge_{i \in B}{\neg x_{i, h, a_i}} \Rightarrow y_{\mathcal{N} \setminus B}`$
