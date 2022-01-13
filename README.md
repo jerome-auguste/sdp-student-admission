@@ -104,7 +104,7 @@ A completely different aproach (having better performance in computing time but 
 We define values for each class, each criteriion and each value (grade) of the training set.
 
 We then define clauses that model the properties and the hypothesis that the training set should respect (eg. ordered classes $`C^1 \prec ... \prec C^p`$)
-A state of the art sat solver (gophersat) is then used to find a model for the solution, which is then decoded to be interpreted.
+A state of the art SAT solver (gophersat) is then used to find a model for the solution, which is then decoded to be interpreted.
 
 ### Encoding the problem
 
