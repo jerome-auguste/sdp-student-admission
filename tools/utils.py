@@ -84,6 +84,8 @@ def exec_gophersat(filename: str,
                                     "model over index",
                                     "assigns to each variable a boolean value")
     """
+    if cmd == None:
+        cmd = "./gophersat.exe"
     result = subprocess.run([cmd, filename],
                             stdout=subprocess.PIPE,
                             check=True,

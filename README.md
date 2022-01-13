@@ -38,7 +38,7 @@ The goal is to find the best parameters on an optimization problem to accept a s
 **TODO**: Update this section if the generator is changed (eg. for noise control)
 
 1. Install `requirements.txt` in your `Python` environment
-2. Place the `gophersat.exe` binary file in the root folder of the project
+2. Make sure you have a `gophersat` executable. Default name and location is `./gophersat.exe` (binary file in the root folder of the project). Please provide an alternative location with `--gopher-path` in others cases.
 3. Run the command `python ./main.py [optionnal kwargs]`
 
 Optionnal arguments you can pass in `main.py`:
@@ -48,6 +48,8 @@ Optionnal arguments you can pass in `main.py`:
 - `-ncr` or `--num_criteria` for the number of criteria
 - `-l` or `--lmbda` for the threshold value of the MR-Sort generator
 - `-n` or `--noisy` to trigger noise on the dataset (set to 5%)
+- `-g` or `--gopher-path` to set the path to the GopherSat solver (default `./gophersat.exe`)
+
 
 ## :1234: MR-Sorst approach
 
@@ -116,5 +118,5 @@ Different clauses are then created, defining the rules our solver will respect:
 - $`\forall i \in \mathcal{N}, \forall 1 \leq h \leq p-1, \forall k<k', \quad x_{i, h, k} \Rightarrow x_{i, h, k'}`$ (We can only consider adjacent grades)
 - $`\forall i \in \mathcal{N}, \forall 1 \leq h < h' \leq p-1, \forall k, \quad x_{i, h, k} \Rightarrow x_{i, h', k'}`$ (we can only consider adjacent boundaries)
 - $`\forall B \subset B' \subseteq \mathcal{N}, \quad y_{B} \Rightarrow y_{B'}`$ (We can only consider $`B`$ and  $`B'`$ such that  $`|B' \setminus B| = 1`$)
-- $`\forall B \subseteq \mathcal{N}, forall 1 \leq h \leq p-1 \forall u \in X^*: A(u) = C^{h-1}, \quad \bigwedge_{i \in B}{x_{i, h, u_i}} \Rightarrow \neg y_B`$
-- $`\forall B \subseteq \mathcal{N}, forall 1 \leq h \leq p-1 \forall a \in X^*: A(a) = C^{h-1}, \quad \bigwedge_{i \in B}{\neg x_{i, h, a_i}} \Rightarrow y_{\mathcal{N} \setminus B}`$
+- $`\forall B \subseteq \mathcal{N}, \forall 1 \leq h \leq p-1 \forall u \in X^*: A(u) = C^{h-1}, \quad \bigwedge_{i \in B}{x_{i, h, u_i}} \Rightarrow \neg y_B`$
+- $`\forall B \subseteq \mathcal{N}, \forall 1 \leq h \leq p-1 \forall a \in X^*: A(a) = C^{h}, \quad \bigwedge_{i \in B}{\neg x_{i, h, a_i}} \Rightarrow y_{\mathcal{N} \setminus B}`$

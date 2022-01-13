@@ -11,6 +11,7 @@ def parseArguments():
     parser.add_argument("-ncr", "--num_criteria", help="Number of criteria.", type=int, default=4)
     parser.add_argument("-l", "--lmbda", help="Base lambda.", type=float, default=None)
     parser.add_argument("-n", "--noisy", help="Noise control", action="store_true")
+    parser.add_argument("-g", "--gopher-path", help="Path to gophersat solver.", type=str, default="./gophersat.exe")
     
 
 
