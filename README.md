@@ -53,7 +53,9 @@ Optionnal arguments you can pass in `main.py`:
 
 **TODO**: Update with multi-classes formulas + other comments
 
-We want to maximize data separation. Therefore, for each student, we can define a (positive) loss compared to the threshold and the *minimum loss* over the train set:
+Based on [Leroy et al 2011](https://centralesupelec.edunao.com/pluginfile.php/214890/mod_label/intro/2011-Leroy-Mousseau-Pirlot-ADT.pdf)
+
+We want to maximize data separation. Therefore, for each student, accepted or rejected, we can define a slack compared to the threshold:
 
 ```math
 \sum_{i}{w_{i}(s)}-\lambda - \sigma_s = 0 \forall s \in A^*
@@ -63,13 +65,13 @@ We want to maximize data separation. Therefore, for each student, we can define 
 \sum_{i}{w_{i}(s)}-\lambda + \sigma_s = 0 \forall s \in R^*
 ```
 
-Considering the margin between data from different classes (as done in SVM in Machine Learning):
+We will consider the margin between data from different classes (as done in SVM in Machine Learning), which is defined as the minimum slack:
 
 ```math
 \alpha = \min_{s} \sigma_s 
 ```
 
-We want to maximize it
+We want to maximize it, to maximize data separation:
 
 ```math
 \max \alpha 
