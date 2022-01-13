@@ -11,7 +11,10 @@ We want to maximize data separation. Therefore, for each student, we can define 
 
 
 ```math
-\sum_{i}{w_{i}(s)}-\lambda - \sigma_s = 0 \forall s \in A^* \linebreak
+\sum_{i}{w_{i}(s)}-\lambda - \sigma_s = 0 \forall s \in A^*
+```
+
+```math
 \sum_{i}{w_{i}(s)}-\lambda + \sigma_s = 0 \forall s \in R^*
 ```
 
@@ -19,10 +22,11 @@ We want to maximize data separation. Therefore, for each student, we can define 
 \alpha = \min_{s} \sigma_s 
 ```
 
- \max \alpha 
+```math
+\max \alpha 
+```
 
-\begin{tabular}{l l}
-    $\sum_{i \in N}{w_i(s)} + \sigma_s + \epsilon = \lambda$ & $\forall s \in R^*$ \\
+- `$\sum_{i \in N}{w_i(s)} + \sigma_s + \epsilon = \lambda \forall s \in R^*$`
 
     $\sum_{i \in N} w_i(s) = \lambda +  \sigma_s$ & $\forall s \in A^*$ \\
 
