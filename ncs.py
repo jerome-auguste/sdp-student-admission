@@ -61,8 +61,8 @@ class NcsSatModel:
         self.i2v.update(self.coal_i2v)
 
         # Results to be shared to predict
-        self.frontier = None
-        self.suff_coal = None
+        self.frontier = {i: [0]*self.gen.num_criteria for i in range(1, self.gen.num_classes)}
+        self.suff_coal = ()
 
     def clauses_2a(self) -> list:
         """Computes ascending scales clauses (named 2a in Definition 4)
@@ -239,8 +239,10 @@ class NcsSatModel:
         # Results
         is_sat, model = res
         if not is_sat:
-            print("---------------- WARNING! ----------------")
-            print("Unsatisfiable model")
+            print("--------------------------------------- SAT WARNING! ---------------------------------------")
+            print("-              Unsatisfiable model, alternatives might be assigned to class 0              -")
+            print("--------------------------------------------------------------------------------------------")
+            
             
 
         # index_model = [int(x) for x in model if int(x) != 0]
@@ -250,10 +252,10 @@ class NcsSatModel:
             for v in model if int(v) != 0
         }
         front_results = [
-            x for x in self.variables["frontier_var"] if var_model[x]
+            x for x in self.variables["frontier_var"] if x in var_model and var_model[x]
         ]
         coal_results = [
-            x for x in self.variables["coalition_var"] if var_model[x]
+            x for x in self.variables["coalition_var"] if x in var_model and var_model[x]
         ]
 
         # print("Frontier variables assumptions:")
@@ -262,7 +264,7 @@ class NcsSatModel:
 
         # print(f"Resulted sufficient coalitions: {coal_results}")
 
-        frontier = {i: [0]*self.gen.num_criteria for i in range(1, self.gen.num_classes)}
+        # frontier = {i: [0]*self.gen.num_criteria for i in range(1, self.gen.num_classes)}
         for h in range(1, self.gen.num_classes):
             class_front = [0]*self.gen.num_criteria
             for i in range(self.gen.num_criteria):
@@ -279,7 +281,7 @@ class NcsSatModel:
                     crit_front = min(criterion_val)  # (i, h, k)
                     class_front[i] = crit_front
 
-            frontier[h] = class_front
+            self.frontier[h] = class_front
         # print("\nFrontier")
         # for el in frontier:
         #     print(el)
@@ -295,7 +297,7 @@ class NcsSatModel:
                 for i in coal:
                     alt_pred.append(
                         sum([
-                            alt[i] >= frontier[h][i]
+                            alt[i] >= self.frontier[h][i]
                             for h in range(1, self.gen.num_classes)
                         ]))  # Vote for each criterion of the coalition
                 coal_pred.append(
@@ -309,7 +311,6 @@ class NcsSatModel:
                 best_accuracy = coal_accuracy
                 best_pred = coal_pred
                 best_coal = coal
-                self.frontier = frontier
                 self.suff_coal = best_coal
         return best_pred
 
@@ -320,14 +321,17 @@ class NcsSatModel:
         Returns:
             list: labels (classes) of the train_set (len(pred) == test_set.shape[0])
         """
-        pred = []
-        for alt in self.gen.grades_test:
-            pred.append(
-                min([  # Takes the min class found (assuming ordered classes)
-                    sum([  # Classifies values for each criteria
-                        alt[i] >= self.frontier[h][i]
-                        for h in range(1, self.gen.num_classes)
-                    ]) for i in self.suff_coal
-                ]))
+        pred = [0]*len(self.gen.grades_test)
+        for i_alt, alt in enumerate(self.gen.grades_test):
+            try :
+                pred[i_alt] = min([  # Takes the min class found (assuming ordered classes)
+                        sum([  # Classifies values for each criteria
+                            alt[i] >= self.frontier[h][i]
+                            for h in range(1, self.gen.num_classes) if h in self.frontier
+                        ]) for i in self.suff_coal
+                    ])
+            except ValueError:
+                pass
+    
 
         return pred

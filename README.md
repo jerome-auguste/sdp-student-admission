@@ -38,7 +38,7 @@ The goal is to find the best parameters on an optimization problem to accept a s
 **TODO**: Update this section if the generator is changed (eg. for noise control)
 
 1. Install `requirements.txt` in your `Python` environment
-2. Place a `gophersat.exe` binary file in the root folder of the project
+2. Place the `gophersat.exe` binary file in the root folder of the project
 3. Run the command `python ./main.py [optionnal kwargs]`
 
 Optionnal arguments you can pass in `main.py`:
