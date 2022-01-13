@@ -1,9 +1,7 @@
-"""This module solves an NCS problem with a SAT Solver (gophersat.exe)"""
-
-import numpy as np
+"""This module solves an U-NCS problem with a SAT Solver (gophersat)"""
 
 from tools.generator import Generator
-from tools.utils import *
+from tools.utils import possible_values_per_crit, subsets, clauses_to_dimacs, write_dimacs_file, exec_gophersat
 
 
 class NcsSatModel:
@@ -242,8 +240,8 @@ class NcsSatModel:
             print("--------------------------------------- SAT WARNING! ---------------------------------------")
             print("-              Unsatisfiable model, alternatives might be assigned to class 0              -")
             print("--------------------------------------------------------------------------------------------")
-            
-            
+
+
 
         # index_model = [int(x) for x in model if int(x) != 0]
 
@@ -332,6 +330,6 @@ class NcsSatModel:
                     ])
             except ValueError:
                 pass
-    
+
 
         return pred
