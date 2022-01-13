@@ -10,13 +10,12 @@ class NcsSatModel:
     """Non Compensatory Sorting model solved with (gophersat) SAT solver
     (cf. Belahcène et al 2018)"""
 
-    def __init__(self, generator: Generator, train_set: np.ndarray,
-                 labels: np.ndarray) -> None:
+    def __init__(self, generator: Generator) -> None:
 
         # Generator attributes
-        self.train_set = train_set
-        self.labels = labels
         self.gen = generator
+        self.train_set = self.gen.grades
+        self.labels = self.gen.admission
 
         # Reformatting variables
         self.coalitions = [
@@ -241,7 +240,7 @@ class NcsSatModel:
         is_sat, model = res
         if not is_sat:
             print("Unsatisfiable model, stopping the training\n \
-                  please consider using another training set")
+                  please consider using another training set"                                                             )
 
         # index_model = [int(x) for x in model if int(x) != 0]
 
@@ -286,7 +285,6 @@ class NcsSatModel:
         #     print(el)
 
         # Find the best coalition for the considered frontier
-        # best_pred = [0] * self.gen.size
         best_accuracy = 0
         best_coal = tuple()
         for coal in coal_results:
@@ -308,7 +306,6 @@ class NcsSatModel:
                  for s in range(self.gen.size)]) / self.gen.size
             if coal_accuracy > best_accuracy:
                 best_accuracy = coal_accuracy
-                # best_pred = coal_pred
                 best_coal = coal
                 self.frontier = frontier
                 self.suff_coal = best_coal
