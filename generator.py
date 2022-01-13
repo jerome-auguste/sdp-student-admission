@@ -5,7 +5,7 @@ from collections import Counter
 from sklearn.model_selection import train_test_split
 
 class Generator():
-    def __init__(self,size:int = 100,num_classes:int= 2,num_criterions:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None, size_test:float = 0.2, noisy = False) -> None:
+    def __init__(self,size:int = 100,num_classes:int= 2,num_criteria:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None, size_test:float = 0.2, noisy = False) -> None:
         """
         Classe principale générant un dataset et les labels associés.
         La génération se fait a l'initialisation et stocke dans les attributs grades et labels les
@@ -13,7 +13,7 @@ class Generator():
         KArgs :
             - size (int) : taille du dataset
             - num_classes (int) : nombre de classes a générer. Il y'aura num_classes-1 frontiers
-            - num_criterions (int) : nombre de critères (ou notes par exemple). On tire ces notes selon une distrib uniforme entre 0 et 20
+            - num_criteria (int) : nombre de critères (ou notes par exemple). On tire ces notes selon une distrib uniforme entre 0 et 20
             - lmbda (float) : lambda définissant la "majorité" pour le modèle MR-Sort
 
         Attributs intéressants :
@@ -24,7 +24,7 @@ class Generator():
         self.size = size
         self.lmbda = lmbda
         self.num_classes = num_classes
-        self.num_criterions = num_criterions
+        self.num_criteria = num_criteria
         if lmbda is None or lmbda > 1 or lmbda < 0:
             self.lmbda = uniform(0.5,1)
         self.weights = weights
@@ -37,23 +37,23 @@ class Generator():
 
     def init_weights(self) -> np.ndarray:
         #Genère les poids selon une distrib normale pour qu'ils ne soient pas trop différents
-        w = np.random.standard_normal(self.num_criterions) + 2
+        w = np.random.standard_normal(self.num_criteria) + 2
         w /= w.sum()
         #On vérifie qu'il n'y a pas de poids négatif et on retire les poids tant que ça n'est pas le cas
         while any(w < 0):
-            w = np.random.standard_normal(self.num_criterions) + 2
+            w = np.random.standard_normal(self.num_criteria) + 2
             w /= w.sum()
         return w
 
     def init_frontier(self) -> np.ndarray:
         # dernière limite basse (précédente frontière)
-        last = np.zeros(self.num_criterions)
+        last = np.zeros(self.num_criteria)
         frontiers = []
         for i in range(1,self.num_classes):
             # on tire une array de variable aléatoire sur une distrib uniforme entre la frontière précédente
             # de chaque critère et i/nombre de classes pour s'assurer de la dominance de la classe suivante sur la précédente,
             # comme dans l'article de référence
-            last = np.random.uniform(last,[i*20/self.num_classes]*self.num_criterions)
+            last = np.random.uniform(last,[i*20/self.num_classes]*self.num_criteria)
             frontiers.append(last)
         return np.array(frontiers)
 
@@ -72,7 +72,7 @@ class Generator():
 
     def generate(self, noisy):
         # génère les notes et les labels
-        grades = np.random.uniform(0,20,(self.size,self.num_criterions))
+        grades = np.random.uniform(0,20,(self.size,self.num_criteria))
         labels = self.label(grades)
         grades, grades_test, labels, labels_test = train_test_split(grades,labels,test_size=self.size_test)
         if noisy:

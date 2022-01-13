@@ -8,7 +8,7 @@ from ncs import NcsSatModel
 
 if __name__=='__main__':
     args = parseArguments()
-    gen = Generator(args.size, args.num_classes, args.num_criterions, args.lmbda, noisy=args.noisy)
+    gen = Generator(args.size, args.num_classes, args.num_criteria, args.lmbda, noisy=args.noisy)
     gen.display()
     # gen = Generator(size=1000, num_classes=4, lmbda=0.5, weights=[0.2, 0.4, 0.25, 0.15], frontier=[12, 13, 10, 11])
 
