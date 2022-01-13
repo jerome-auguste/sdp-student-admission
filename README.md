@@ -38,7 +38,7 @@ The goal is to find the best parameters on an optimization problem to accept a s
 **TODO**: Update this section if the generator is changed (eg. for noise control)
 
 1. Install `requirements.txt` in your `Python` environment
-2. Place the `gophersat.exe` binary file in the root folder of the project
+2. Make sure you have a `gophersat` executable. Default name and location is `./gophersat.exe` (binary file in the root folder of the project). Please provide an alternative location with `--gopher-path` in others cases.
 3. Run the command `python ./main.py [optionnal kwargs]`
 
 Optionnal arguments you can pass in `main.py`:
@@ -48,6 +48,8 @@ Optionnal arguments you can pass in `main.py`:
 - `-ncr` or `--num_criteria` for the number of criteria
 - `-l` or `--lmbda` for the threshold value of the MR-Sort generator
 - `-n` or `--noisy` to trigger noise on the dataset (set to 5%)
+- `-g` or `--gopher-path` to set the path to the GopherSat solver (default `./gophersat.exe`)
+
 
 ## :1234: MR-Sorst approach
 

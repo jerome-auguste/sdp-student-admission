@@ -41,7 +41,6 @@ class MRSort:
 
         return:
             - np.array: category found by the solver for each sample
-            - int: compute time in secondes
         """
         if self.objective == None:
             return (None, 0)
