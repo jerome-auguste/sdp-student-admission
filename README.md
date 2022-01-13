@@ -51,11 +51,11 @@ Optionnal arguments you can pass in `main.py`:
 - `-npct` or `--noise_percent` to change percentage of noisy data (set to 5%)
 - `-g` or `--gopher-path` to set the path to the GopherSat solver (default `./gophersat.exe`)
 
-## :: Generator
+## Generator
 
-Generates data according to the method described in [Leroy et al 2011](https://centralesupelec.edunao.com/pluginfile.php/214890/mod_label/intro/2011-Leroy-Mousseau-Pirlot-ADT.pdf).
+Generates data according to the method described in [Leroy et al 2011](https://centralesupelec.edunao.com/pluginfile.php/214890/mod_label/intro/2011-Leroy-Mousseau-Pirlot-ADT.pdf) (see paragraph _Simulating an MR-Sort model n_).
 
-- Initialize weights randomly in a normal distribution centered in 2 to avoid negative weight (redraws weights if one is negative).
+- Initialize weights randomly in a normal distribution centered in 2 to avoid negative weight (redraws weights if one is negative), then normalize the weights vector.
 - Initialize a random lambda in an uniform distribution in [0.5,1]
 - Draws frontiers successively in an uniform distribution such that each frontier for each criterion is dominated by the next frontier.
 - Then calculate the classes for each record.
