@@ -48,7 +48,7 @@ Optionnal arguments you can pass in `main.py`:
 - `-ncr` or `--num_criteria` for the number of criteria
 - `-l` or `--lmbda` for the threshold value of the MR-Sort generator
 - `-n` or `--noisy` to trigger noise on the dataset (set to 5%)
-- `-g` or `--gopher-path` to set the path to the GopherSat solver (default "./gophersat.exe")
+- `-g` or `--gopher-path` to set the path to the GopherSat solver (default `./gophersat.exe`)
 
 
 ## :1234: MR-Sorst approach
