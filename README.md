@@ -14,6 +14,19 @@ The goal is to find the best parameters on an optimization problem to accept a s
 :date: Due date of the first part: **14/01/2022** \
 :date: Due date of the entire project: **01/02/2022**
 
+## :file_folder: Project layout
+
+```
+.
+├── main.py                 # Main script to be run in python environment
+├── mrsort.py               # MR-Sort model class
+├── ncs.py                  # U-NCS SAT model class
+├── MR-Sort-NCS.pdf         # Guidelines of the project
+├── tools                   # Tools and utilities
+├── LICENSE
+└── README.md
+```
+
 ## :running: How to run the code
 
 **TODO**: Update this section if the generator is changed (eg. for noise control)
