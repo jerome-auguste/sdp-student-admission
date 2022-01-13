@@ -16,15 +16,21 @@ The goal is to find the best parameters on an optimization problem to accept a s
 
 ## :file_folder: Project layout
 
-```
+```text
 .
 ├── main.py                 # Main script to be run in python environment
 ├── mrsort.py               # MR-Sort model class
 ├── ncs.py                  # U-NCS SAT model class
 ├── MR-Sort-NCS.pdf         # Guidelines of the project
 ├── tools                   # Tools and utilities
+│   ├── generator.py        # Generates dataset based on parameters
+│   ├── parseArg.py         # Command line argument parser used in main
+│   └── utils.py            # Utilities functions
+│
 ├── LICENSE
+├── .gitignore
 └── README.md
+
 ```
 
 ## :running: How to run the code
@@ -41,7 +47,7 @@ Optionnal arguments you can pass in `main.py`:
 - `-ncl` or `--num_classes` for the number of classes
 - `-ncr` or `--num_criteria` for the number of criteria
 - `-l` or `--lmbda` for the threshold value of the MR-Sort generator
-- `-n` or `--noisy` to trigger noise on the dataset
+- `-n` or `--noisy` to trigger noise on the dataset (set to 5%)
 
 ## MR-Sorst approach
 

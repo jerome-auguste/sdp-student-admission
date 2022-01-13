@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from generator import Generator
-from utils import *
+from tools.generator import Generator
+from tools.utils import *
 
 
 class NcsSatModel:

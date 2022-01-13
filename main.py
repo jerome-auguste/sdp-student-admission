@@ -1,8 +1,8 @@
 from time import time
-from generator import Generator
+from tools.generator import Generator
 from mrsort import MRSort
-from parseArg import parseArguments
-from utils import print_comparison
+from tools.parseArg import parseArguments
+from tools.utils import print_comparison
 from ncs import NcsSatModel
 
 
