@@ -1,23 +1,23 @@
 # SDP Student Admission
 
 The project takes place in the context of the Systems Decision Process course of CentraleSupélec
-The goal is to find the best parameters on an optimization problem to accept a set of students in the higher education program based on an assessment set (of different topics).
+The goal is to find the best parameters on an optimization problem to accept a set of students in the higher education program based on an assessment set (of different topics/criteria).
 
 :date: Due date of the first part: **14/01/2022** \
 :date: Due date of the entire project: **01/02/2022**
 
-We want to maximize data separation. Therefore, for each student, we can define a (positive) loss compared to the threshold and the *minimum loss* over the train set 
+## MR-Sorst approach
+We want to maximize data separation. Therefore, for each student, we can define a (positive) loss compared to the threshold and the *minimum loss* over the train set:
 
-(Latex equation for report if needed)
 
- 
 ```math
-\sum_{i}{w_{i}(s)}-\lambda - \sigma_s = 0 \forall s \in A^*
+\sum_{i}{w_{i}(s)}-\lambda - \sigma_s = 0 \forall s \in A^* \linebreak
 \sum_{i}{w_{i}(s)}-\lambda + \sigma_s = 0 \forall s \in R^*
 ```
 
- \alpha = \min_{s} \sigma_s 
-
+```math
+\alpha = \min_{s} \sigma_s 
+```
 
  \max \alpha 
 
