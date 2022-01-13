@@ -49,7 +49,7 @@ Optionnal arguments you can pass in `main.py`:
 - `-l` or `--lmbda` for the threshold value of the MR-Sort generator
 - `-n` or `--noisy` to trigger noise on the dataset (set to 5%)
 
-## MR-Sorst approach
+## :1234: MR-Sorst approach
 
 **TODO**: Update with multi-classes formulas + other comments
 
@@ -91,7 +91,7 @@ s.t.
 - $`\sigma_s \in \mathbb{R} \quad \forall s \in A^* \cup R^*`$
 - $`\alpha \in \mathbb{R}`$
 
-## U-NCS SAT approach
+## :ballot_box_with_check: U-NCS SAT approach
 
 ### Concept
 
