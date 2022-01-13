@@ -61,6 +61,10 @@ class NcsSatModel:
         self.i2v.update(self.front_i2v)
         self.i2v.update(self.coal_i2v)
 
+        # Results to be shared to predict
+        self.frontier = None
+        self.suff_coal = None
+
     def clauses_2a(self) -> list:
         """Computes ascending scales clauses (named 2a in Definition 4)
         For all criteria i, classes h and adjacent pairs of value k<k':
@@ -225,8 +229,8 @@ class NcsSatModel:
 
         return res
 
-    def solve(self):
-        """Use gophersat to solve all the clauses defined in previous methods
+    def train(self):
+        """Trains model to find the best coalition and frontier that matches the train_set
 
         Returns:
             tuple: frontier and possible coalitions
@@ -235,7 +239,12 @@ class NcsSatModel:
 
         # Results
         is_sat, model = res
-        index_model = [int(x) for x in model if int(x) != 0]
+        if not is_sat:
+            print("Unsatisfiable model, stopping the training\n \
+                  please consider using another training set")
+
+        # index_model = [int(x) for x in model if int(x) != 0]
+
         var_model = {
             self.i2v[abs(int(v))]: int(v) > 0
             for v in model if int(v) != 0
@@ -276,9 +285,10 @@ class NcsSatModel:
         # for el in frontier:
         #     print(el)
 
-        # print(f"Resulted frontiers: {frontier}")
-        best_pred = [0] * self.gen.size
+        # Find the best coalition for the considered frontier
+        # best_pred = [0] * self.gen.size
         best_accuracy = 0
+        best_coal = tuple()
         for coal in coal_results:
             coal_pred = []
             for alt in self.train_set:
@@ -298,6 +308,29 @@ class NcsSatModel:
                  for s in range(self.gen.size)]) / self.gen.size
             if coal_accuracy > best_accuracy:
                 best_accuracy = coal_accuracy
-                best_pred = coal_pred
+                # best_pred = coal_pred
+                best_coal = coal
+                self.frontier = frontier
+                self.suff_coal = best_coal
 
-        return best_pred
+    def predict(self, test_set: np.ndarray):
+        """Predicts labels (classes) from a test_set of students
+        The test_set has to have the same .shape[1] than the train_set used to train the model
+
+        Args:
+            test_set (np.ndarray): array of alternatives to classify according to the model
+
+        Returns:
+            list: labels (classes) of the train_set (len(pred) == test_set.shape[0])
+        """
+        pred = []
+        for alt in test_set:
+            pred.append(
+                min([ # Takes the min class found (assuming ordered classes)
+                    sum([ # Classifies values for each criteria
+                        alt[i] >= self.frontier[h][i]
+                        for h in range(1, self.gen.num_classes)
+                    ]) for i in self.suff_coal
+                ]))
+
+        return pred
