@@ -39,6 +39,7 @@ if __name__=='__main__':
     ncs_begin = time()
     
     u_ncs = NcsSatModel(generator=gen)
+    u_ncs.set_gophersat_path(args.gopherpath)
     train_labels = u_ncs.train()
     ncs_end = time()
     test_labels = u_ncs.predict()

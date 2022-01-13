@@ -62,6 +62,11 @@ class NcsSatModel:
         self.frontier = {i: [0]*self.gen.num_criteria for i in range(1, self.gen.num_classes)}
         self.suff_coal = ()
 
+        self.gopherpath = None
+
+    def set_gophersat_path(self, gopherpath):
+        self.gopherpath = gopherpath
+
     def clauses_2a(self) -> list:
         """Computes ascending scales clauses (named 2a in Definition 4)
         For all criteria i, classes h and adjacent pairs of value k<k':
@@ -222,7 +227,7 @@ class NcsSatModel:
             len(self.variables["coalition_var"]))
 
         write_dimacs_file(my_dimacs, "workingfile.cnf")
-        res = exec_gophersat("workingfile.cnf")
+        res = exec_gophersat("workingfile.cnf", self.gopherpath)
 
         return res
 
