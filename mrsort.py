@@ -2,7 +2,6 @@ from gurobipy import *
 import numpy as np
 from numpy.core.fromnumeric import shape
 from itertools import product
-from time import time
 
 np.set_printoptions(precision=2)
 
@@ -44,7 +43,6 @@ class MRSort:
             - np.array: category found by the solver for each sample
             - int: compute time in secondes
         """
-        start = time()
         if self.objective == None:
             return (None, 0)
 
@@ -55,11 +53,10 @@ class MRSort:
 
         if self.model.status != GRB.OPTIMAL:
             return (None, 0)
-        compute_time = time() - start
         res = np.zeros((self.nb_ech))
         for i in range(self.nb_split):
             res += ((self.grades > self.b.X[:,i])*self.w.X).sum(axis=1) > self.lmbda.X
-        return res, compute_time
+        return res
 
     def test(self):
         res = np.zeros((len(self.gen.grades_test)))

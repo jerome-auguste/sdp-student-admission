@@ -25,7 +25,7 @@ class NcsSatModel:
         self.values_support = possible_values_per_crit(self.train_set)
         # Set of the possible values in the train_set for each criterion
         self.alternatives_per_class = [[
-            u for u in range(self.gen.size) if self.labels[u] == h
+            u for u in range(len(self.train_set)) if self.labels[u] == h
         ] for h in range(self.gen.num_classes)]
 
         # Generating triplet (i, h, k) and coalition set B as mentioned in
@@ -239,8 +239,10 @@ class NcsSatModel:
         # Results
         is_sat, model = res
         if not is_sat:
-            print("Unsatisfiable model, stopping the training\n \
-                  please consider using another training set"                                                             )
+            print("---------------- WARNING! ----------------")
+            print("Unsatisfiable model, stopping the training\n please consider using another training set")
+            return None
+            
 
         # index_model = [int(x) for x in model if int(x) != 0]
 
@@ -261,9 +263,9 @@ class NcsSatModel:
 
         # print(f"Resulted sufficient coalitions: {coal_results}")
 
-        frontier = {}
+        frontier = {i: [0]*self.gen.num_criterions for i in range(1, self.gen.num_classes)}
         for h in range(1, self.gen.num_classes):
-            class_front = []
+            class_front = [0]*self.gen.num_criterions
             for i in range(self.gen.num_criterions):
                 criterion_val = [
                     x[2] for x in front_results if x[0] == i and x[1] == h
@@ -276,8 +278,7 @@ class NcsSatModel:
                     crit_front = None
                 else:
                     crit_front = min(criterion_val)  # (i, h, k)
-
-                class_front.append(crit_front)
+                    class_front[i] = crit_front
 
             frontier[h] = class_front
         # print("\nFrontier")
@@ -285,6 +286,7 @@ class NcsSatModel:
         #     print(el)
 
         # Find the best coalition for the considered frontier
+        best_pred = [0] * self.gen.size
         best_accuracy = 0
         best_coal = tuple()
         for coal in coal_results:
@@ -303,28 +305,27 @@ class NcsSatModel:
 
             coal_accuracy = sum(
                 [coal_pred[s] == self.labels[s]
-                 for s in range(self.gen.size)]) / self.gen.size
+                 for s in range(len(self.train_set))]) / len(self.train_set)
             if coal_accuracy > best_accuracy:
                 best_accuracy = coal_accuracy
+                best_pred = coal_pred
                 best_coal = coal
                 self.frontier = frontier
                 self.suff_coal = best_coal
+        return best_pred
 
-    def predict(self, test_set: np.ndarray):
+    def predict(self):
         """Predicts labels (classes) from a test_set of students
         The test_set has to have the same .shape[1] than the train_set used to train the model
-
-        Args:
-            test_set (np.ndarray): array of alternatives to classify according to the model
 
         Returns:
             list: labels (classes) of the train_set (len(pred) == test_set.shape[0])
         """
         pred = []
-        for alt in test_set:
+        for alt in self.gen.grades_test:
             pred.append(
-                min([ # Takes the min class found (assuming ordered classes)
-                    sum([ # Classifies values for each criteria
+                min([  # Takes the min class found (assuming ordered classes)
+                    sum([  # Classifies values for each criteria
                         alt[i] >= self.frontier[h][i]
                         for h in range(1, self.gen.num_classes)
                     ]) for i in self.suff_coal
