@@ -5,13 +5,16 @@ from collections import Counter
 from sklearn.model_selection import train_test_split
 
 class Generator():
-    def __init__(self,size:int = 100,num_classes:int= 2,num_criteria:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None, size_test:float = 0.2, noisy = False) -> None:
+    def __init__(self,size:int = 100,num_classes:int= 2,num_criteria:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None, size_test:float = 0.2, noisy:bool = False, noise_percent:float = 0.05) -> None:
         """
         Classe principale générant un dataset et les labels associés.
         La génération se fait a l'initialisation et stocke dans les attributs grades et labels les
         données générées (pour conserver les datasets pour la reproductibilité)
         KArgs :
             - size (int) : taille du dataset
+            - size_test (float) : entre 0 et 1, pourcentage des données générées affectées au test set
+            - noisy (bool) : si true, données perturbées en changeant aléatoirement la classe de certains élements dans le train set
+            - noise_percent (float) : entre 0 et 1, pourcentage des données bruitées si l'option noisy est a true
             - num_classes (int) : nombre de classes a générer. Il y'aura num_classes-1 frontiers
             - num_criteria (int) : nombre de critères (ou notes par exemple). On tire ces notes selon une distrib uniforme entre 0 et 20
             - lmbda (float) : lambda définissant la "majorité" pour le modèle MR-Sort
@@ -33,7 +36,7 @@ class Generator():
         self.frontier = frontier
         if frontier is None:
             self.frontier = self.init_frontier()
-        self.grades, self.admission, self.grades_test, self.admission_test = self.generate(noisy=noisy)
+        self.grades, self.admission, self.grades_test, self.admission_test = self.generate(noisy=noisy,noise_percent=noise_percent)
 
     def init_weights(self) -> np.ndarray:
         #Genère les poids selon une distrib normale pour qu'ils ne soient pas trop différents
