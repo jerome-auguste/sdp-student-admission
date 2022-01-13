@@ -26,7 +26,7 @@ We want to maximize data separation. Therefore, for each student, we can define 
 \max \alpha 
 ```
 
-- `$\sum_{i \in N}{w_i(s)} + \sigma_s + \epsilon = \lambda \forall s \in R^*$`
+- $`\sum_{i \in N}{w_i(s)} + \sigma_s + \epsilon = \lambda \forall s \in R^*`$
 
     $\sum_{i \in N} w_i(s) = \lambda +  \sigma_s$ & $\forall s \in A^*$ \\
 
