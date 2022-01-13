@@ -1,8 +1,9 @@
 """Utils file with funtions used in the project"""
 
-import numpy as np
 import subprocess
 from collections import Counter
+import numpy as np
+
 
 def possible_values_per_crit(values_record: np.ndarray) -> list:
     """Computes the (unique) existing values for each criterion
