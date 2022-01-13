@@ -21,7 +21,7 @@ class MRSort:
 
         # Constants
         self.nb_ech = len(self.admission)
-        self.nb_notes = self.gen.num_criterions
+        self.nb_notes = self.gen.num_criteria
 
         # Gurobi variables
         self.alpha = self.model.addVar()

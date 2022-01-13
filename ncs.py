@@ -19,7 +19,7 @@ class NcsSatModel:
 
         # Reformatting variables
         self.coalitions = [
-            tuple(el) for el in subsets(list(range(self.gen.num_criterions)))
+            tuple(el) for el in subsets(list(range(self.gen.num_criteria)))
         ]
         # Tuple format is accepted as a key to the encoder dictionnary
         self.values_support = possible_values_per_crit(self.train_set)
@@ -33,7 +33,7 @@ class NcsSatModel:
         self.variables = {
             "frontier_var":
             list({(i, h, k)
-                  for i in range(self.gen.num_criterions)
+                  for i in range(self.gen.num_criteria)
                   for h in range(1, self.gen.num_classes)
                   for k in self.values_support[i]}),
             "coalition_var":
@@ -75,7 +75,7 @@ class NcsSatModel:
         clauses_2a = []
 
         # Not only adjacent values of k
-        # for i in range(self.gen.num_criterions):
+        # for i in range(self.gen.num_criteria):
         #     crit_values = sorted(self.values_support[i])
         #     for h in range(self.gen.num_classes):
         #         for ik in range(len(crit_values)-1):
@@ -91,7 +91,7 @@ class NcsSatModel:
         #                     # )
 
         # Only for adjacent values of k
-        for i in range(self.gen.num_criterions):
+        for i in range(self.gen.num_criteria):
             crit_values = self.values_support[
                 i]  # Values are unique and already sorted
             for h in range(1, self.gen.num_classes):
@@ -118,7 +118,7 @@ class NcsSatModel:
         clauses_2b = []
 
         # Not only for adjacent values
-        # for i in range(self.gen.num_criterions):
+        # for i in range(self.gen.num_criteria):
         #     for k in set(self.values_support[i]):
         #         for h in range(self.gen.num_classes-1):
         #             for hp in range(h+1, self.gen.num_classes):
@@ -127,7 +127,7 @@ class NcsSatModel:
         # print(f"({i}, {h}, {k}) < ({i}, {hp}, {k})")
 
         # Only for adjacent values
-        for i in range(self.gen.num_criterions):
+        for i in range(self.gen.num_criteria):
             for h in range(1, self.gen.num_classes - 1):
                 for k in set(self.values_support[i]):
                     clauses_2b.append([
@@ -157,7 +157,7 @@ class NcsSatModel:
         # Only for a "adjacent" coalitions
         for B in self.coalitions:
             N_minus_B = {crit
-                         for crit in range(self.gen.num_criterions)} - set(B)
+                         for crit in range(self.gen.num_criteria)} - set(B)
             for i in N_minus_B:  # Adds exactly one element to the coalition
                 Bp = set(B).union(set([i]))
                 clauses_2c.append(
@@ -200,7 +200,7 @@ class NcsSatModel:
             list: clauses according to the formula
         """
         clauses_2e = []
-        N = set(list(range(self.gen.num_criterions)))
+        N = set(list(range(self.gen.num_criteria)))
         for B in self.coalitions:
             for h in range(1, self.gen.num_classes):
                 for a in self.alternatives_per_class[h]:
@@ -240,8 +240,7 @@ class NcsSatModel:
         is_sat, model = res
         if not is_sat:
             print("---------------- WARNING! ----------------")
-            print("Unsatisfiable model, stopping the training\n please consider using another training set")
-            return None
+            print("Unsatisfiable model")
             
 
         # index_model = [int(x) for x in model if int(x) != 0]
@@ -263,10 +262,10 @@ class NcsSatModel:
 
         # print(f"Resulted sufficient coalitions: {coal_results}")
 
-        frontier = {i: [0]*self.gen.num_criterions for i in range(1, self.gen.num_classes)}
+        frontier = {i: [0]*self.gen.num_criteria for i in range(1, self.gen.num_classes)}
         for h in range(1, self.gen.num_classes):
-            class_front = [0]*self.gen.num_criterions
-            for i in range(self.gen.num_criterions):
+            class_front = [0]*self.gen.num_criteria
+            for i in range(self.gen.num_criteria):
                 criterion_val = [
                     x[2] for x in front_results if x[0] == i and x[1] == h
                 ]
