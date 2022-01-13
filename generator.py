@@ -70,13 +70,13 @@ class Generator():
             passed += ((grades > frontier)*self.weights).sum(axis=1) > self.lmbda
         return passed
 
-    def generate(self, noisy):
+    def generate(self, noisy, noise_percent=0.05):
         # génère les notes et les labels
         grades = np.random.uniform(0,20,(self.size,self.num_criterions))
         labels = self.label(grades)
         grades, grades_test, labels, labels_test = train_test_split(grades,labels,test_size=self.size_test)
         if noisy:
-            index_noisy = np.random.choice([i for i in range(len(labels))],size=np.random.randint(len(labels)//3))
+            index_noisy = np.random.choice([i for i in range(len(labels))],size=np.random.randint(len(labels)*noise_percent))
             for index in index_noisy:
                 labels[index] = np.random.randint(0,self.num_classes+1)
         return grades, labels, grades_test, labels_test
