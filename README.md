@@ -33,7 +33,7 @@ The goal is to find the best parameters on an optimization problem to accept a s
 
 ```
 
-## :running: How to run the code
+## :mag: How to run the code
 
 **TODO**: Update this section if the generator is changed (eg. for noise control)
 
