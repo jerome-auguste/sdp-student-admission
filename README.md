@@ -129,8 +129,16 @@ We define 2 types of boolean variable to be used to model our problem:
 
 Different clauses are then created, defining the rules our solver will respect:
 
-- $`\forall i \in \mathcal{N}, \forall 1 \leq h \leq p-1, \forall k<k', \quad x_{i, h, k} \Rightarrow x_{i, h, k'}`$ (We can only consider adjacent grades)
-- $`\forall i \in \mathcal{N}, \forall 1 \leq h < h' \leq p-1, \forall k, \quad x_{i, h, k} \Rightarrow x_{i, h', k'}`$ (we can only consider adjacent boundaries)
-- $`\forall B \subset B' \subseteq \mathcal{N}, \quad y_{B} \Rightarrow y_{B'}`$ (We can only consider $`B`$ and  $`B'`$ such that  $`|B' \setminus B| = 1`$)
-- $`\forall B \subseteq \mathcal{N}, \forall 1 \leq h \leq p-1 \forall u \in X^*: A(u) = C^{h-1}, \quad \bigwedge_{i \in B}{x_{i, h, u_i}} \Rightarrow \neg y_B`$
-- $`\forall B \subseteq \mathcal{N}, \forall 1 \leq h \leq p-1 \forall a \in X^*: A(a) = C^{h}, \quad \bigwedge_{i \in B}{\neg x_{i, h, a_i}} \Rightarrow y_{\mathcal{N} \setminus B}`$
+- $`\forall i \in \mathcal{N}, \forall 1 \leq h \leq p-1, \forall k<k', \quad x_{i, h, k} \Rightarrow x_{i, h, k'}`$ (We can only consider adjacent grades) (1)
+- $`\forall i \in \mathcal{N}, \forall 1 \leq h < h' \leq p-1, \forall k, \quad x_{i, h', k} \Rightarrow x_{i, h, k}`$ (we can only consider adjacent boundaries) (2)
+- $`\forall B \subset B' \subseteq \mathcal{N}, \quad y_{B} \Rightarrow y_{B'}`$ (We can only consider $`B`$ and  $`B'`$ such that  $`|B' \setminus B| = 1`$) (3)
+- $`\forall B \subseteq \mathcal{N}, \forall 1 \leq h \leq p-1 \forall u \in X^*: A(u) = C^{h-1}, \quad \bigwedge_{i \in B}{x_{i, h, u_i}} \Rightarrow \neg y_B`$ (4)
+- $`\forall B \subseteq \mathcal{N}, \forall 1 \leq h \leq p-1 \forall a \in X^*: A(a) = C^{h}, \quad \bigwedge_{i \in B}{\neg x_{i, h, a_i}} \Rightarrow y_{\mathcal{N} \setminus B}`$  (5)
+
+
+# Single Peak problem
+
+## U-NCS SAT approach
+
+The formulation of the problem is similar, except for (1) which is replaced by :
+- $`\forall i \in \mathcal{N}, \forall 1 \leq h \leq p-1, \forall k<k'<k'', \quad x_{i, h, k} \wedge x_{i,h,k''} \Rightarrow x_{i, h, k'}`$  (1')
