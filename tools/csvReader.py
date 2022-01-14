@@ -15,8 +15,9 @@ class csvReader():
     def to_generator(self):
         gen = Generator()
         gen.size  = self.size
+        offset = self.labels.min()
+        self.labels = self.labels - offset
         gen.grades, gen.admission = self.grades, self.labels
         gen.num_classes, gen.num_criteria = self.num_classes, self.num_criterions
         gen.split(self.grades,self.labels)
         return gen
-# %%
