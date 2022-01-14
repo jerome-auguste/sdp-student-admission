@@ -35,8 +35,6 @@ The goal is to find the best parameters on an optimization problem to accept a s
 
 ## :mag: How to run the code
 
-**TODO**: Update this section if the generator is changed (eg. for noise control)
-
 1. Install `requirements.txt` in your `Python` environment
 2. Make sure you have a `gophersat` executable. Default name and location is `./gophersat.exe` (binary file in the root folder of the project). Please provide an alternative location with `--gopher-path` in others cases.
 3. Run the command `python ./main.py [optionnal kwargs]`
@@ -48,10 +46,19 @@ Optionnal arguments you can pass in `main.py`:
 - `-ncr` or `--num_criteria` for the number of criteria
 - `-l` or `--lmbda` for the threshold value of the MR-Sort generator
 - `-n` or `--noisy` to trigger noise on the dataset (set to 5%)
+- `-npct` or `--noise_percent` to change percentage of noisy data (set to 5%)
 - `-g` or `--gopher-path` to set the path to the GopherSat solver (default `./gophersat.exe`)
 
+## :baby: Generator
 
-## :1234: MR-Sorst approach
+Generates data according to the method described in [Leroy et al 2011](https://centralesupelec.edunao.com/pluginfile.php/214890/mod_label/intro/2011-Leroy-Mousseau-Pirlot-ADT.pdf) (see paragraph _Simulating an MR-Sort model n_).
+
+- Initialize weights randomly in a normal distribution centered in 2 to avoid negative weight (redraws weights if one is negative), then normalize the weights vector.
+- Initialize a random lambda in an uniform distribution in [0.5,1]
+- Draws frontiers successively in an uniform distribution such that each frontier for each criterion is dominated by the next frontier.
+- Then calculate the classes for each record.
+
+## :1234: MR-Sort approach
 
 Based on [Leroy et al 2011](https://centralesupelec.edunao.com/pluginfile.php/214890/mod_label/intro/2011-Leroy-Mousseau-Pirlot-ADT.pdf)
 
@@ -104,7 +111,7 @@ A completely different aproach (having better performance in computing time but 
 We define values for each class, each criteriion and each value (grade) of the training set.
 
 We then define clauses that model the properties and the hypothesis that the training set should respect (eg. ordered classes $`C^1 \prec ... \prec C^p`$)
-A state of the art sat solver (gophersat) is then used to find a model for the solution, which is then decoded to be interpreted.
+A state of the art SAT solver (gophersat) is then used to find a model for the solution, which is then decoded to be interpreted.
 
 ### Encoding the problem
 
