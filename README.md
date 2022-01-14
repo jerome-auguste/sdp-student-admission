@@ -35,8 +35,6 @@ The goal is to find the best parameters on an optimization problem to accept a s
 
 ## :mag: How to run the code
 
-**TODO**: Update this section if the generator is changed (eg. for noise control)
-
 1. Install `requirements.txt` in your `Python` environment
 2. Make sure you have a `gophersat` executable. Default name and location is `./gophersat.exe` (binary file in the root folder of the project). Please provide an alternative location with `--gopher-path` in others cases.
 3. Run the command `python ./main.py [optionnal kwargs]`
@@ -51,7 +49,7 @@ Optionnal arguments you can pass in `main.py`:
 - `-npct` or `--noise_percent` to change percentage of noisy data (set to 5%)
 - `-g` or `--gopher-path` to set the path to the GopherSat solver (default `./gophersat.exe`)
 
-## Generator
+## :shipit: Generator
 
 Generates data according to the method described in [Leroy et al 2011](https://centralesupelec.edunao.com/pluginfile.php/214890/mod_label/intro/2011-Leroy-Mousseau-Pirlot-ADT.pdf) (see paragraph _Simulating an MR-Sort model n_).
 
