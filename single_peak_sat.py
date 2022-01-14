@@ -81,7 +81,7 @@ class NcsSatModel:
             crit_values = self.values_support[
                 i]  # Values are unique and already sorted
             for h in range(1, self.gen.num_classes):
-                for ik in range(len(crit_values) - 1):
+                for ik in range(len(crit_values) - 2):
                     ikp = ik + 1
                     iks = ik + 2
                     clauses_2a.append([
