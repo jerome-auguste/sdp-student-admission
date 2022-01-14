@@ -69,30 +69,13 @@ class NcsSatModel:
 
     def clauses_2a(self) -> list:
         """Computes ascending scales clauses (named 2a in Definition 4)
-        For all criteria i, classes h and adjacent pairs of value k<k':
-        x_{i, h, k} => x_{i, h, k'}
+        For all criteria i, classes h and adjacent pairs of value k<k'<k":
+        x_{i, h, k} and x_{i, h, k"} => x_{i, h, k'}
 
         Returns:
             list: clauses according to the formula
         """
         clauses_2a = []
-
-        # Not only adjacent values of k
-        # for i in range(self.gen.num_criteria):
-        #     crit_values = sorted(self.values_support[i])
-        #     for h in range(self.gen.num_classes):
-        #         for ik in range(len(crit_values)-1):
-        #             for ikp in range(ik + 1, len(crit_values[ik + 1:])):
-        #                 if crit_values[ik] < crit_values[ikp]:
-        #                     clauses_2a.append([
-        #                         self.front_v2i[(i, h, crit_values[ikp])],
-        #                         -self.front_v2i[(i, h, crit_values[ik])]
-        #                     ])
-        #                     # print(
-        #                     #     f"({i}, {h}, {crit_values[ikp]}) >
-        #                     #          ({i}, {h}, {crit_values[ik]})"
-        #                     # )
-
         # Only for adjacent values of k
         for i in range(self.gen.num_criteria):
             crit_values = self.values_support[
@@ -121,16 +104,6 @@ class NcsSatModel:
         """
         # 3b Hierarchy of profiles
         clauses_2b = []
-
-        # Not only for adjacent values
-        # for i in range(self.gen.num_criteria):
-        #     for k in set(self.values_support[i]):
-        #         for h in range(self.gen.num_classes-1):
-        #             for hp in range(h+1, self.gen.num_classes):
-        #                 clauses_2b.append([self.front_v2i[(i, h, k)],
-        #                                   -self.front_v2i[(i, hp, k)]])
-        # print(f"({i}, {h}, {k}) < ({i}, {hp}, {k})")
-
         # Only for adjacent values
         for i in range(self.gen.num_criteria):
             for h in range(1, self.gen.num_classes - 1):
@@ -151,14 +124,6 @@ class NcsSatModel:
             list: clauses according to the formula
         """
         clauses_2c = []
-
-        # Not only for "adjacent" coalitions (difference is a singleton)
-        # for B in self.coalitions:
-        #     for Bp in self.coalitions:
-        #         if set(B).issubset(set(Bp)):
-        #             clauses_2c.append([self.coal_v2i[Bp], -self.coal_v2i[B]])
-        #             # print(f"{B} is subset of {Bp}")
-
         # Only for a "adjacent" coalitions
         for B in self.coalitions:
             N_minus_B = {crit
