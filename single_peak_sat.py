@@ -236,7 +236,7 @@ class NcsSatModel:
 
         # frontier = {i: [0]*self.gen.num_criteria for i in range(1, self.gen.num_classes)}
         for h in range(1, self.gen.num_classes):
-            class_front = [0]*self.gen.num_criteria
+            class_front = [(0, 0)]*self.gen.num_criteria
             for i in range(self.gen.num_criteria):
                 criterion_val = [
                     x[2] for x in front_results if x[0] == i and x[1] == h
@@ -246,10 +246,11 @@ class NcsSatModel:
                     coal_results = [
                         coal for coal in coal_results if i not in coal
                     ]
-                    crit_front = None
+                    crit = (None, None)
                 else:
-                    crit_front = min(criterion_val)  # (i, h, k)
-                    class_front[i] = crit_front
+                    min_crit = min(criterion_val)  # (i, h, k)
+                    max_crit = max(criterion_val)
+                    class_front[i] = (min_crit, max_crit)
 
             self.frontier[h] = class_front
         # print("\nFrontier")
@@ -267,7 +268,7 @@ class NcsSatModel:
                 for i in coal:
                     alt_pred.append(
                         sum([
-                            alt[i] >= self.frontier[h][i]
+                            (alt[i] >= self.frontier[h][i][0]) and (alt[i] <= self.frontier[h][i][1])
                             for h in range(1, self.gen.num_classes)
                         ]))  # Vote for each criterion of the coalition
                 coal_pred.append(
@@ -296,7 +297,7 @@ class NcsSatModel:
             try :
                 pred[i_alt] = min([  # Takes the min class found (assuming ordered classes)
                         sum([  # Classifies values for each criteria
-                            alt[i] >= self.frontier[h][i]
+                            (alt[i] >= self.frontier[h][i][0]) and (alt[i] <= self.frontier[h][i][1])
                             for h in range(1, self.gen.num_classes) if h in self.frontier
                         ]) for i in self.suff_coal
                     ])
