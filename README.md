@@ -25,7 +25,8 @@ The goal is to find the best parameters on an optimization problem to accept a s
 ├── tools                   # Tools and utilities
 │   ├── generator.py        # Generates dataset based on parameters
 │   ├── parseArg.py         # Command line argument parser used in main
-│   └── utils.py            # Utilities functions
+│   ├── utils.py            # Utilities functions
+│   └── csvReader.py        # Reader for csv data
 │
 ├── LICENSE
 ├── .gitignore
@@ -48,6 +49,7 @@ Optionnal arguments you can pass in `main.py`:
 - `-n` or `--noisy` to trigger noise on the dataset (set to 5%)
 - `-npct` or `--noise_percent` to change percentage of noisy data (set to 5%)
 - `-g` or `--gopher-path` to set the path to the GopherSat solver (default `./gophersat.exe`)
+- `-f` or `--file` to set the path to a csv data file (will override the random generation which is the default behavior)
 
 ## :baby: Generator
 
@@ -57,6 +59,11 @@ Generates data according to the method described in [Leroy et al 2011](https://c
 - Initialize a random lambda in an uniform distribution in [0.5,1]
 - Draws frontiers successively in an uniform distribution such that each frontier for each criterion is dominated by the next frontier.
 - Then calculate the classes for each record.
+
+
+## csvReader
+
+Reads the data in a csv file. The data needs to be in the exact same format as provided (see this [file](https://centralesupelec.edunao.com/pluginfile.php/217659/mod_label/intro/data6crit50ex.csv))
 
 ## :1234: MR-Sort approach
 
@@ -75,13 +82,13 @@ We want to maximize data separation. Therefore, for each student, accepted or re
 We will consider the margin between data from different classes (as done in SVM in Machine Learning), which is defined as the minimum slack:
 
 ```math
-\alpha = \min_{s} \sigma_s 
+\alpha = \min_{s} \sigma_s
 ```
 
 We want to maximize it, to maximize data separation:
 
 ```math
-\max \alpha 
+\max \alpha
 ```
 
 s.t.
