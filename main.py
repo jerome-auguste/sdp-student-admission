@@ -1,5 +1,6 @@
 from time import time
 from tools.generator import Generator
+from tools.csvReader import csvReader
 from mrsort import MRSort
 from tools.parseArg import parseArguments
 from tools.utils import print_comparison
@@ -8,8 +9,13 @@ from ncs import NcsSatModel
 
 if __name__=='__main__':
     args = parseArguments()
-    gen = Generator(args.size, args.num_classes, args.num_criteria, args.lmbda, noisy=args.noisy, noise_percent= args.noise_percent)
-    gen.display()
+    if args.file is None:
+        gen = Generator(args.size, args.num_classes, args.num_criteria, args.lmbda, noisy=args.noisy, noise_percent= args.noise_percent)
+        gen.display()
+    else:
+        rd = csvReader(args.file)
+        gen = rd.to_generator()
+        gen.display_imported()
     # gen = Generator(size=1000, num_classes=4, lmbda=0.5, weights=[0.2, 0.4, 0.25, 0.15], frontier=[12, 13, 10, 11])
 
     # MR_Sort

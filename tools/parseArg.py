@@ -13,6 +13,6 @@ def parseArguments():
     parser.add_argument("-n", "--noisy", help="Noise control", action="store_true")
     parser.add_argument("-g", "--gopher-path", help="Path to gophersat solver.", type=str, default="./gophersat.exe")
     parser.add_argument("-npct", "--noise_percent", help="Percentage of noisy (false) label, if noisy activated", default=0.05)
-
+    parser.add_argument('-f', "--file", help="path to file", default=None)
 
     return parser.parse_args()

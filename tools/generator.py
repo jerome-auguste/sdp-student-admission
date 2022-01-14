@@ -84,6 +84,9 @@ class Generator():
                 labels[index] = np.random.randint(0,self.num_classes+1)
         return grades, labels, grades_test, labels_test
 
+    def split(self,grades,labels):
+        self.grades, self.grades_test, self.admission, self.admission_test = train_test_split(grades,labels,test_size=self.size_test)
+
     def display(self):
         """
         Print the parameters used by the generator.
@@ -93,6 +96,17 @@ class Generator():
             f"- lambda: {self.lmbda}\n",
             f"- weights: {self.weights}\n",
             f"- frontier: {self.frontier}\n",
+            f"- echantillons par categorie: {dict(Counter(self.admission))}\n"
+        )
+
+    def display_imported(self):
+        """
+        Print the parameters used by the generator.
+        """
+        print(f"Parameters du generateur:\n",
+            f"- size: {self.size}\n",
+            f"- nombre de classes: {self.num_classes}\n",
+            f"- nombre de critères: {self.num_criteria}\n",
             f"- echantillons par categorie: {dict(Counter(self.admission))}\n"
         )
 
