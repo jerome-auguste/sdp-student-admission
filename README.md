@@ -141,4 +141,4 @@ Different clauses are then created, defining the rules our solver will respect:
 ## U-NCS SAT approach
 
 The formulation of the problem is similar, except for (1) which is replaced by :
-$`\forall i \in \mathcal{N}, \forall 1 \leq h \leq p-1, \forall k<k'<k'', \quad x_{i, h, k} \wedge x_{i,h,k''} \Rightarrow x_{i, h, k'}`$  (1)
+$`\forall i \in \mathcal{N}, \forall 1 \leq h \leq p-1, \forall k<k'<k'', \quad x_{i, h, k} \wedge x_{i,h,k''} \Rightarrow x_{i, h, k'}`$  (1')
