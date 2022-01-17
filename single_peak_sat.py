@@ -4,7 +4,7 @@ from tools.generator import Generator
 from tools.utils import possible_values_per_crit, subsets, clauses_to_dimacs, write_dimacs_file, exec_gophersat
 
 
-class NcsSatModel:
+class SinglePeakModel:
     """Non Compensatory Sorting model solved with (gophersat) SAT solver
     (cf. Belahcène et al 2018)"""
 

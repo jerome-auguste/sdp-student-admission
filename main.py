@@ -31,13 +31,6 @@ if __name__=='__main__':
     mr_perf["train_pred"] = res
     mr_perf["test_pred"] = mrs.test()
 
-
-    # print_res(
-    #     mr_sort_end - mr_sort_begin,
-    #     res, gen.admission,
-    #     mrs.test(), gen.admission_test
-    # )
-
     # NCS
     ncs_perf = {}
     # print("\nNCS")
