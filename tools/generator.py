@@ -5,7 +5,7 @@ from collections import Counter
 from sklearn.model_selection import train_test_split
 
 class Generator():
-    def __init__(self,size:int = 100,num_classes:int= 2,num_criteria:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None, size_test:float = 0.2, noisy:bool = False, noise_percent:float = 0.05) -> None:
+    def __init__(self, peak = False, size:int = 100,num_classes:int= 2,num_criteria:int = 4, lmbda:float=None,weights:np.ndarray=None,frontier:np.ndarray=None, size_test:float = 0.2, noisy:bool = False, noise_percent:float = 0.05) -> None:
         """
         Classe principale générant un dataset et les labels associés.
         La génération se fait a l'initialisation et stocke dans les attributs grades et labels les
@@ -28,6 +28,7 @@ class Generator():
         self.lmbda = lmbda
         self.num_classes = num_classes
         self.num_criteria = num_criteria
+        self.peak = peak
         if lmbda is None or lmbda > 1 or lmbda < 0:
             self.lmbda = uniform(0.5,1)
         self.weights = weights
@@ -35,7 +36,10 @@ class Generator():
             self.weights = self.init_weights()
         self.frontier = frontier
         if frontier is None:
-            self.frontier = self.init_frontier()
+            if not peak:
+                self.frontier = self.init_frontier()
+            else:
+                self.frontier = self.init_peak_frontier()
         self.grades, self.admission, self.grades_test, self.admission_test = self.generate(noisy=noisy,noise_percent=noise_percent)
 
     def init_weights(self) -> np.ndarray:
@@ -60,6 +64,38 @@ class Generator():
             frontiers.append(last)
         return np.array(frontiers)
 
+    def init_peak_frontier(self) -> np.ndarray:
+        sizes = np.random.randint(1,3,self.num_criteria)
+        last = [np.zeros(sz) for sz in sizes if sz]
+        for front in last :
+            if len(front) > 1 :
+                front[1] = 20
+        frontiers = []
+        for cl in range(1,self.num_classes+1):
+            arr = []
+            for crit in range(self.num_criteria):
+                if sizes[crit] == 1:
+                    arr.append(np.random.uniform(last[crit][0],cl*20/self.num_classes,sizes[crit]))
+                else:
+                    a = np.random.uniform(last[crit][0],last[crit][1],sizes[crit])
+                    a.sort()
+                    arr.append(a)
+            frontiers.append(arr)
+            last = arr.copy()
+        return frontiers
+
+    def label_peak_frontier(self,grades:np.ndarray) -> np.ndarray:
+        classes = np.zeros((self.size))
+        for _,frontiers in enumerate(self.frontier):
+            passed = np.zeros((self.size))
+            for it,crit in enumerate(frontiers):
+                if len(crit) == 1:
+                    passed += (grades[:,it] > crit)*self.weights[it]
+                else:
+                    passed += ((grades[:,it] > crit[0])*(grades[:,it] < crit[1]))*self.weights[it]
+            classes += passed > self.lmbda
+        return classes
+
     def label(self,grades:np.ndarray) -> np.ndarray:
         passed = np.zeros((self.size))
         for frontier in self.frontier:
@@ -76,7 +112,10 @@ class Generator():
     def generate(self, noisy, noise_percent=0.05):
         # génère les notes et les labels
         grades = np.random.uniform(0,20,(self.size,self.num_criteria))
-        labels = self.label(grades)
+        if not self.peak:
+            labels = self.label(grades)
+        else:
+            labels = self.label_peak_frontier(grades)
         grades, grades_test, labels, labels_test = train_test_split(grades,labels,test_size=self.size_test)
         if noisy:
             index_noisy = np.random.choice([i for i in range(len(labels))],size=np.random.randint(len(labels)*noise_percent))
@@ -109,5 +148,3 @@ class Generator():
             f"- nombre de critères: {self.num_criteria}\n",
             f"- echantillons par categorie: {dict(Counter(self.admission))}\n"
         )
-
-# %%
