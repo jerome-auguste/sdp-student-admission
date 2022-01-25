@@ -7,10 +7,10 @@ from sklearn.model_selection import train_test_split
 
 class Generator():
     FRONTIERS = ['all','valley','peak']
-    def __init__(self,possible_frontiers = None, size: int = 100, num_classes: int = 2,
+    def __init__(self, size: int = 100, num_classes: int = 2,
                  num_criteria: int = 4, lmbda: float = None,
                  weights: np.ndarray = None, frontier: np.ndarray = None,
-                 size_test: float = 0.2, noisy: bool = False, noise_percent: float = 0.05) -> None:
+                 size_test: float = 0.2, noisy: bool = False, noise_percent: float = 0.05, possible_frontiers = None) -> None:
         """
         Classe principale générant un dataset et les labels associés.
         La génération se fait a l'initialisation et stocke dans les attributs grades et labels les
