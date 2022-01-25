@@ -135,4 +135,4 @@ gophersat.exe
 # VSCode settings
 .vscode/
 gophersat-1.1.6
-data6crit50ex.csv
+*.csv

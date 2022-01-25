@@ -144,3 +144,22 @@ def print_comparison(mr_perf: dict, ncs_perf: dict, train_classes: list, test_cl
         print(f"{'Test predictions':<30} {str(dict(Counter(mr_perf['test_pred']))):<30} {str(dict(Counter(ncs_perf['test_pred']))):<30}")
         print(f"{'Test accuracy':<30} {sum([mr_perf['test_pred'][i]==test_classes[i] for i in range(len(test_classes))])/len(mr_perf['test_pred']):<30} {sum([ncs_perf['test_pred'][i]==test_classes[i] for i in range(len(test_classes))])/len(ncs_perf['test_pred']):<30}")
         
+def print_peak(ncs_perf: dict, train_classes: list, test_classes: list=None) -> None:
+    """Prints comparison table between models
+
+    Args:
+        ncs_perf (dict): Parsed performances of U-NCS model
+        train_classes (list): Ground truth on the train set classes
+        test_classes (list, optional): Ground truth on the test set. Defaults to None.
+    """
+    
+    print("------------------------------------------ RESULTS ------------------------------------------")
+    print(f"{' ':<30} {'U-NCS Peak':<30}")
+    print(f"{'Train duration':<30} {str(ncs_perf['time']) + 's':<30}")
+    print(f"{'Train predictions':<30} {str(dict(Counter(ncs_perf['train_pred']))):<30}")
+    print(f"{'Train accuracy':<30} {sum([ncs_perf['train_pred'][i]==train_classes[i] for i in range(len(train_classes))])/len(ncs_perf['train_pred']):<30}")
+    
+    if ("test_pred" in ncs_perf) and ("test_pred" in ncs_perf) and test_classes is not None:
+        print(f"{'Test predictions':<30} {str(dict(Counter(ncs_perf['test_pred']))):<30}")
+        print(f"{'Test accuracy':<30} {sum([ncs_perf['test_pred'][i]==test_classes[i] for i in range(len(test_classes))])/len(ncs_perf['test_pred']):<30}")
+   

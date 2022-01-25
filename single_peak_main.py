@@ -2,14 +2,14 @@ from time import time
 from tools.generator import Generator
 from tools.csvReader import csvReader
 from tools.parseArg import parseArguments
-from tools.utils import 
 from single_peak_sat import SinglePeakModel
+from tools.utils import print_peak
 
 
 if __name__=='__main__':
     args = parseArguments()
     if args.file is None:
-        gen = Generator(args.size, args.num_classes, args.num_criteria, args.lmbda, noisy=args.noisy, noise_percent= args.noise_percent)
+        gen = Generator(args.size, args.num_classes, args.num_criteria, args.lmbda, noisy=args.noisy, noise_percent=args.noise_percent)
         gen.display()
     else:
         rd = csvReader(args.file)
@@ -31,5 +31,5 @@ if __name__=='__main__':
     spm_perf["time"] = ncs_end - spm_begin
     spm_perf["train_pred"] = train_labels
     spm_perf["test_pred"] = test_labels
-    
+    print_peak(spm_perf, train_classes=gen.admission, test_classes=gen.admission_test)    
     
