@@ -202,6 +202,3 @@ class Generator():
               f"- echantillons par categorie: {dict(Counter(self.admission))}\n"
               )
 
-# %%
-a = Generator(peak=True)
-# %%
