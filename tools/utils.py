@@ -37,7 +37,7 @@ def subsets(criteria: list) -> list:
     return subset + [[criteria[0]] + y for y in subset]
 
 # Construction du DIMACS et Résolution
-def clauses_to_dimacs(clauses: list, numvar: int) -> str:
+def clauses_to_dimacs(clauses: list, numvar: int, max_weight: int=None) -> str:
     """Generates gophersat interpretable clauses (in cnf)
 
     Args:
@@ -47,12 +47,20 @@ def clauses_to_dimacs(clauses: list, numvar: int) -> str:
     Returns:
         str: parsed clauses for gophersat
     """
-    dimacs = ("c SAT encoded NCS problem \np cnf " + str(numvar) + " " +
-              str(len(clauses)) + "\n")
-    for clause in clauses:
-        for atom in clause:
-            dimacs += str(atom) + " "
-        dimacs += "0\n"
+    if max_weight:
+        dimacs = ("c MaxSAT encoded NCS problem \np wcnf " + str(numvar) + " " + str(len(clauses)) + " " + str(max_weight) + "\n")
+        for clause in clauses:
+            for atom in clause: #Weight for first atom and literal for the others
+                dimacs += str(atom) + " "
+            dimacs += "0\n"
+
+    else:
+        dimacs = ("c SAT encoded NCS problem \np cnf " + str(numvar) + " " + str(len(clauses)) + "\n")
+        for clause in clauses:
+            for atom in clause:
+                dimacs += str(atom) + " "
+            dimacs += "0\n"
+
     return dimacs
 
 

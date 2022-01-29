@@ -2,7 +2,6 @@ from time import time
 from tools.generator import Generator
 from tools.csvReader import csvReader
 from tools.parseArg import parseArguments
-from tools.utils import 
 from single_peak_sat import SinglePeakModel
 
 
@@ -33,3 +32,6 @@ if __name__=='__main__':
     spm_perf["test_pred"] = test_labels
     
     
+    print(f"Duration: {spm_perf['time']}")
+    print(f"Train perfs: {sum(spm_perf['train_pred'] == gen.admission)/len(spm_perf['train_pred'])}")
+    print(f"Test perfs: {sum(spm_perf['test_pred'] == gen.admission_test)/len(spm_perf['test_pred'])}")
