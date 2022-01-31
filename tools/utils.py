@@ -141,6 +141,8 @@ def exec_gophersat(filename: str,
 #             f"  - precision: {sum([res_test[i]==admission_test[i] for i in range(len(res_test))])/len(res_test)}\n"
 #         )
 
+def accuracy(pred, ref):
+    return sum([pred[i]==ref[i] for i in range(len(ref))])/len(pred)
 
 def print_comparison(mr_perf: dict, ncs_perf: dict, train_classes: list, test_classes: list=None) -> None:
     """Prints comparison table between models
@@ -156,11 +158,11 @@ def print_comparison(mr_perf: dict, ncs_perf: dict, train_classes: list, test_cl
     print(f"{' ':<30} {'MRSort':<30} {'U-NCS SAT':<30}")
     print(f"{'Train duration':<30} {str(mr_perf['time']) + 's':<30} {str(ncs_perf['time']) + 's':<30}")
     print(f"{'Train predictions':<30} {str(dict(Counter(mr_perf['train_pred']))):<30} {str(dict(Counter(ncs_perf['train_pred']))):<30}")
-    print(f"{'Train accuracy':<30} {sum([mr_perf['train_pred'][i]==train_classes[i] for i in range(len(train_classes))])/len(mr_perf['train_pred']):<30} {sum([ncs_perf['train_pred'][i]==train_classes[i] for i in range(len(train_classes))])/len(ncs_perf['train_pred']):<30}")
+    print(f"{'Train accuracy':<30} {accuracy(mr_perf['train_pred'], train_classes):<30} {accuracy(ncs_perf['train_pred'], train_classes):<30}")
     
     if ("test_pred" in mr_perf) and ("test_pred" in ncs_perf) and test_classes is not None:
         print(f"{'Test predictions':<30} {str(dict(Counter(mr_perf['test_pred']))):<30} {str(dict(Counter(ncs_perf['test_pred']))):<30}")
-        print(f"{'Test accuracy':<30} {sum([mr_perf['test_pred'][i]==test_classes[i] for i in range(len(test_classes))])/len(mr_perf['test_pred']):<30} {sum([ncs_perf['test_pred'][i]==test_classes[i] for i in range(len(test_classes))])/len(ncs_perf['test_pred']):<30}")
+        print(f"{'Test accuracy':<30} {accuracy(mr_perf['test_pred'], test_classes):<30} {accuracy(ncs_perf['test_pred'], test_classes):<30}")
         
 def print_peak(ncs_perf: dict, train_classes: list, test_classes: list=None) -> None:
     """Prints comparison table between models
@@ -175,9 +177,9 @@ def print_peak(ncs_perf: dict, train_classes: list, test_classes: list=None) -> 
     print(f"{' ':<30} {'U-NCS Peak':<30}")
     print(f"{'Train duration':<30} {str(ncs_perf['time']) + 's':<30}")
     print(f"{'Train predictions':<30} {str(dict(Counter(ncs_perf['train_pred']))):<30}")
-    print(f"{'Train accuracy':<30} {sum([ncs_perf['train_pred'][i]==train_classes[i] for i in range(len(train_classes))])/len(ncs_perf['train_pred']):<30}")
+    print(f"{'Train accuracy':<30} {accuracy(ncs_perf['train_pred'], train_classes):<30}")
     
     if ("test_pred" in ncs_perf) and ("test_pred" in ncs_perf) and test_classes is not None:
         print(f"{'Test predictions':<30} {str(dict(Counter(ncs_perf['test_pred']))):<30}")
-        print(f"{'Test accuracy':<30} {sum([ncs_perf['test_pred'][i]==test_classes[i] for i in range(len(test_classes))])/len(ncs_perf['test_pred']):<30}")
+        print(f"{'Test accuracy':<30} {accuracy(ncs_perf['test_pred'], test_classes):<30}")
    
