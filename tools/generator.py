@@ -1,6 +1,4 @@
 # %%
-from calendar import c
-from re import A
 import numpy as np
 from random import uniform
 from collections import Counter
@@ -139,8 +137,10 @@ class Generator():
 
     def imbalanced(self, labels, max_imbalance):
         counts = Counter(labels)
+        if len(counts) != self.num_classes:
+            return True
         for classe in counts:
-            if abs(counts[classe]/(self.size/self.num_classes)-1) > max_imbalance:
+            if abs(counts[classe]/self.size-1/self.num_classes)/(1/self.num_classes) > max_imbalance:
                 return True
         return False
 
@@ -153,6 +153,7 @@ class Generator():
             grades = np.random.uniform(0, 20, (self.size, self.num_criteria))
             labels = self.label_frontier(grades)
             it+=1
+            max_imbalance *= 0.999
         grades, grades_test, labels, labels_test = train_test_split(
             grades, labels, test_size=self.size_test)
         if noisy:
@@ -191,3 +192,8 @@ class Generator():
               f"- nombre de critères: {self.num_criteria}\n",
               f"- echantillons par categorie: {dict(Counter(self.admission))}\n"
               )
+
+# %%
+a =Generator()
+a.display()
+# %%
