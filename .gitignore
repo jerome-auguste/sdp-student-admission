@@ -131,6 +131,7 @@ dmypy.json
 # Gophersat solver
 gophersat.exe
 *.cnf
+*.wcnf
 
 # VSCode settings
 .vscode/

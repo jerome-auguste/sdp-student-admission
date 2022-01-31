@@ -79,7 +79,7 @@ def write_dimacs_file(dimacs: str, filename: str):
 # mettre le solveur dans le même dossier que ce notebook
 def exec_gophersat(filename: str,
                    cmd: str = "./gophersat.exe",
-                   encoding: str = "utf8") -> tuple[bool, list, dict]:
+                   encoding: str = "utf8", weighted: bool=False) -> tuple[bool, list, dict]:
     """Executes gophersat on parsed text file (usually in .cnf)
 
     Args:
@@ -92,21 +92,31 @@ def exec_gophersat(filename: str,
                                     "model over index",
                                     "assigns to each variable a boolean value")
     """
-    if cmd == None:
-        cmd = "./gophersat.exe"
     result = subprocess.run([cmd, filename],
                             stdout=subprocess.PIPE,
                             check=True,
                             encoding=encoding)
     string = str(result.stdout)
     lines = string.splitlines()
+        
+    if weighted:
+        s_index = 0
+        while s_index <= len(lines) and lines[s_index][0] != 's':
+            s_index += 1
+        if lines[s_index] != "s OPTIMUM FOUND":
+            return False, {}
+        
+        model = [el.replace('x', '') for el in lines[s_index+1][2:].split(" ") if el != '']
+        
+        return (True, model)
+    
+    else:
+        if lines[1] != "s SATISFIABLE":
+            return False, {}
 
-    if lines[1] != "s SATISFIABLE":
-        return False, {}
+        model = lines[2][2:].split(" ")
 
-    model = lines[2][2:].split(" ")
-
-    return (True, model)
+        return (True, model)
 
 
 # def print_res(compute_time, res_train, admission, res_test=None, admission_test=None):

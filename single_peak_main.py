@@ -2,8 +2,12 @@ from time import time
 from tools.generator import Generator
 from tools.csvReader import csvReader
 from tools.parseArg import parseArguments
+<<<<<<< HEAD
 from single_peak_sat import SinglePeakModel
 from tools.utils import print_peak
+=======
+from single_peak_maxsat import MaxSatSinglePeakModel
+>>>>>>> maxsat
 
 
 if __name__=='__main__':
@@ -22,7 +26,7 @@ if __name__=='__main__':
 
     spm_begin = time()
 
-    u_spm = SinglePeakModel(generator=gen)
+    u_spm = MaxSatSinglePeakModel(generator=gen)
     u_spm.set_gophersat_path(args.gopher_path)
     train_labels = u_spm.train()
     ncs_end = time()
@@ -32,4 +36,3 @@ if __name__=='__main__':
     spm_perf["train_pred"] = train_labels
     spm_perf["test_pred"] = test_labels
     print_peak(spm_perf, train_classes=gen.admission, test_classes=gen.admission_test)    
-    
