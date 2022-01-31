@@ -4,8 +4,8 @@ from tools.generator import Generator
 from tools.utils import possible_values_per_crit, subsets, clauses_to_dimacs, write_dimacs_file, exec_gophersat
 
 
-class SinglePeakModel:
-    """Non Compensatory Sorting model solved with (gophersat) SAT solver
+class MaxSatSinglePeakModel:
+    """Non Compensatory Sorting model solved with (gophersat) MaxSAT solver
     (cf. Belahcène et al 2018)"""
 
     def __init__(self, generator: Generator) -> None:
@@ -68,7 +68,8 @@ class SinglePeakModel:
         self.gopherpath = gopherpath
 
     def clauses_2a(self) -> list:
-        """Computes ascending scales clauses (named 2a in Definition 4)
+        """Computes ascending scales clauses (named 2a in Definition 4),
+        those clauses are considered hard from weights point of view
         For all criteria i, classes h and adjacent pairs of value k<k'<k":
         x_{i, h, k} and x_{i, h, k"} => x_{i, h, k'}
 
@@ -94,7 +95,8 @@ class SinglePeakModel:
 
     def clauses_2b(self) -> list:
         """Computes Hierarchy of profiles clauses (named 2b in Definition 4)
-        (Evaluates classes (frontier) according to each value)
+        (Evaluates classes (frontier) according to each value),
+        those clauses are considered hard from weights point of view
         For all criteria i, adjacent pairs of classes h<h', values k:
         x_{i, h', k} => x_{i, h, k}
         (being in higher classes makes the value greater to lower classes frontier)
@@ -115,7 +117,8 @@ class SinglePeakModel:
         return clauses_2b
 
     def clauses_2c(self) -> list:
-        """Computes coalitions strength clauses (named 2c in Definition 4)
+        """Computes coalitions strength clauses (named 2c in Definition 4),
+        those clauses are considered hard from weights point of view
         For all "adjacent" (difference is exactly 1 element)
         pairs of coalitions (of criteria) B included in B'
         y_B => y_{B'} (as having more criteria still forma sufficient coalition)
@@ -137,7 +140,8 @@ class SinglePeakModel:
 
     def clauses_2d(self) -> list:
         """Computes alternatives outranked by boundary above them clauses (named 2d in Definition 4)
-        (Ensures the correct representation of the assignment (labels))
+        (Ensures the correct representation of the assignment (labels)),
+        those clauses are considered soft from weights point of view
         For all coalition B, for all frontier h and all datapoint u assigned to class h-1
         (AND_{i in B} x_{i, h, u_i}) => -y_B
         (if an alternative is predicted above the h frontier, then the coalition is not sufficient)
@@ -159,7 +163,8 @@ class SinglePeakModel:
     def clauses_2e(self) -> list:
         """Computes alternatives outranked by boundary bellow them clauses
         (named 2e in Definition 4)
-        (Ensures the correct representation of the assignment (labels))
+        (Ensures the correct representation of the assignment (labels)),
+        those clauses are considered soft from weights point of view
         For all coalition B, for all frontier h and all datapoint a assessed at class h
         (AND_{i in B} -x_{i, h, a_i}) => y_{N-B}
         (If the alternative is assigned to the right class
@@ -205,7 +210,7 @@ class SinglePeakModel:
             len(self.variables["coalition_var"]), max_weight=hard_weight)
 
         write_dimacs_file(my_dimacs, "workingfile.wcnf")
-        res = exec_gophersat("workingfile.wcnf", self.gopherpath)
+        res = exec_gophersat(filename="workingfile.wcnf", cmd=self.gopherpath, weighted=True)
 
         return res
 
@@ -221,13 +226,12 @@ class SinglePeakModel:
         is_sat, model = res
         if not is_sat:
             print("--------------------------------------- SAT WARNING! ---------------------------------------")
-            print("-              Unsatisfiable model, alternatives might be assigned to class 0              -")
+            print("-              Optimum not found, alternatives might be assigned to class 0              -")
             print("--------------------------------------------------------------------------------------------")
 
 
 
         # index_model = [int(x) for x in model if int(x) != 0]
-
         var_model = {
             self.i2v[abs(int(v))]: int(v) > 0
             for v in model if int(v) != 0
@@ -257,7 +261,7 @@ class SinglePeakModel:
                     coal_results = [
                         coal for coal in coal_results if i not in coal
                     ]
-                    crit = (None, None)
+                    
                 else:
                     min_crit = min(criterion_val)  # (i, h, k)
                     max_crit = max(criterion_val)

@@ -2,7 +2,7 @@ from time import time
 from tools.generator import Generator
 from tools.csvReader import csvReader
 from tools.parseArg import parseArguments
-from single_peak_sat import SinglePeakModel
+from single_peak_maxsat import MaxSatSinglePeakModel
 
 
 if __name__=='__main__':
@@ -21,7 +21,7 @@ if __name__=='__main__':
 
     spm_begin = time()
 
-    u_spm = SinglePeakModel(generator=gen)
+    u_spm = MaxSatSinglePeakModel(generator=gen)
     u_spm.set_gophersat_path(args.gopher_path)
     train_labels = u_spm.train()
     ncs_end = time()
@@ -33,5 +33,5 @@ if __name__=='__main__':
     
     
     print(f"Duration: {spm_perf['time']}")
-    print(f"Train perfs: {sum(spm_perf['train_pred'] == gen.admission)/len(spm_perf['train_pred'])}")
-    print(f"Test perfs: {sum(spm_perf['test_pred'] == gen.admission_test)/len(spm_perf['test_pred'])}")
+    print(f"Train perfs: {sum([spm_perf['train_pred'][i] == gen.admission[i] for i in range(len(gen.admission))])/len(gen.admission)}")
+    print(f"Test perfs: {sum([spm_perf['test_pred'][i] == gen.admission_test[i] for i in range(len(gen.admission_test))])/len(gen.admission_test)}")
