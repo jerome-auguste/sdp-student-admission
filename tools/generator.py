@@ -192,8 +192,3 @@ class Generator():
               f"- nombre de critères: {self.num_criteria}\n",
               f"- echantillons par categorie: {dict(Counter(self.admission))}\n"
               )
-
-# %%
-a =Generator()
-a.display()
-# %%
