@@ -1,17 +1,22 @@
 # %%
+from calendar import c
+from re import A
 import numpy as np
 from random import uniform
 from collections import Counter
 from sklearn.model_selection import train_test_split
+import pickle
+from joblib import Parallel,delayed
 
 
 class Generator():
-    FRONTIERS = ['all','valley','peak']
+    FRONTIERS = ['all','monotonous','peak']
+    MAX_ITER = 100000
     def __init__(self, size: int = 100, num_classes: int = 2,
                  num_criteria: int = 4, lmbda: float = None,
                  weights: np.ndarray = None, frontier: np.ndarray = None,
                  size_test: float = 0.2, noisy: bool = False, noise_percent: float = 0.05,
-                 possible_frontiers = 'peak') -> None:
+                 possible_frontiers = 'monotonous') -> None:
         """
         Classe principale générant un dataset et les labels associés.
         La génération se fait a l'initialisation et stocke dans les attributs grades et labels les
@@ -24,6 +29,8 @@ class Generator():
             - num_classes (int) : nombre de classes a générer. Il y'aura num_classes-1 frontiers
             - num_criteria (int) : nombre de critères (ou notes par exemple). On tire ces notes selon une distrib uniforme entre 0 et 20
             - lmbda (float) : lambda définissant la "majorité" pour le modèle MR-Sort
+            - possible_frontiers (str) : types de frontières possibles. 'monotonous' donne seulement des frontières linéaires (premier cas vu),
+            'peak' seulement des pics, 'all' donne un mélange aléatoire.
 
         Attributs intéressants :
             - .grades : notes générées
@@ -47,7 +54,7 @@ class Generator():
             if self.possible_frontiers is None:
                 self.frontier = self.init_frontier()
             else:
-                self.frontier = self.init_peak_frontier()
+                self.frontier = self.init_frontier2()
         self.grades, self.admission, self.grades_test, self.admission_test = self.generate(
             noisy=noisy, noise_percent=noise_percent)
 
@@ -74,9 +81,14 @@ class Generator():
             frontiers.append(last)
         return np.array(frontiers)
 
-    def init_peak_frontier(self) -> np.ndarray:
-        sizes = np.random.randint(1, 3, self.num_criteria)
-        last = [np.zeros(sz) for sz in sizes if sz]
+    def init_frontier2(self) -> np.ndarray:
+        if self.possible_frontiers == 'all':
+            sizes = np.random.randint(1, 3, self.num_criteria)
+        elif self.possible_frontiers == 'peak':
+            sizes = np.array([2]*self.num_criteria)
+        elif self.possible_frontiers == 'monotonous':
+            sizes = np.array([1]*self.num_criteria)
+        last = [np.zeros(sz) for sz in sizes]
         for front in last:
             if len(front) > 1:
                 front[1] = 20
@@ -96,52 +108,6 @@ class Generator():
             last = arr.copy()
         return frontiers
 
-    def label_valley_frontier(self, grades: np.ndarray) -> np.ndarray:
-        classes = np.zeros((self.size))
-        for _, frontiers in enumerate(self.frontier):
-            passed = np.zeros((self.size))
-            for it, crit in enumerate(frontiers):
-                if len(crit) == 1:
-                    passed += (grades[:, it] > crit)*self.weights[it]
-                else:
-                    passed += ((grades[:, it] < crit[0]) *
-                               (grades[:, it] > crit[1]))*self.weights[it]
-            classes += passed > self.lmbda
-        return classes
-
-    def label_peak_frontier(self, grades: np.ndarray) -> np.ndarray:
-        classes = np.zeros((self.size))
-        for _, frontiers in enumerate(self.frontier):
-            passed = np.zeros((self.size))
-            for it, crit in enumerate(frontiers):
-                if len(crit) == 1:
-                    passed += (grades[:, it] > crit)*self.weights[it]
-                else:
-                    passed += ((grades[:, it] > crit[0]) *
-                               (grades[:, it] < crit[1]))*self.weights[it]
-            classes += passed > self.lmbda
-        return classes
-
-    def label_random_frontier(self, grades: np.ndarray) -> np.ndarray:
-        classes = np.zeros((self.size))
-        self.frontier_types = {i: np.random.choice(['valley', 'peak'])
-                 for i, front in enumerate(self.frontier[0]) if front.size > 1}
-        for _, frontiers in enumerate(self.frontier):
-            passed = np.zeros((self.size))
-            for it, crit in enumerate(frontiers):
-                if len(crit) == 1:
-                    passed += (grades[:, it] > crit)*self.weights[it]
-                else:
-                    if self.frontier_types[it] == 'valley':
-                        passed += ((grades[:, it] < crit[0]) *
-                                   (grades[:, it] > crit[1]))*self.weights[it]
-                    if self.frontier_types[it] == 'peak':
-                        passed += ((grades[:, it] > crit[0]) *
-                                   (grades[:, it] < crit[1]))*self.weights[it]
-
-            classes += passed > self.lmbda
-        return classes
-
     def label(self, grades: np.ndarray) -> np.ndarray:
         passed = np.zeros((self.size))
         for frontier in self.frontier:
@@ -156,17 +122,37 @@ class Generator():
                        self.weights).sum(axis=1) > self.lmbda
         return passed
 
-    def generate(self, noisy, noise_percent=0.05):
+    def label_frontier(self, grades: np.ndarray) -> np.ndarray:
+        classes = np.zeros((self.size))
+        self.frontier_types = {i: 'peak'
+                 for i, front in enumerate(self.frontier[0]) if len(front) > 1}
+        for _, frontiers in enumerate(self.frontier):
+            passed = np.zeros((self.size))
+            for it, criterion in enumerate(frontiers):
+                if len(self.frontier[0][it]) > 1:
+                    passed += ((grades[:, it] > criterion[0]) *
+                                   (grades[:, it] < criterion[1]))*self.weights[it]
+                else:
+                    passed += (grades[:, it] > criterion)*self.weights[it]
+            classes += passed > self.lmbda
+        return classes
+
+    def imbalanced(self, labels, max_imbalance):
+        counts = Counter(labels)
+        for classe in counts:
+            if abs(counts[classe]/(self.size/self.num_classes)-1) > max_imbalance:
+                return True
+        return False
+
+    def generate(self, noisy, noise_percent=0.05,max_imbalance=0.3):
         # génère les notes et les labels
         grades = np.random.uniform(0, 20, (self.size, self.num_criteria))
-        if self.possible_frontiers == 'peak':
-            labels = self.label_peak_frontier(grades)
-        elif self.possible_frontiers == 'valley':
-            labels = self.label_valley_frontier(grades)
-        elif self.possible_frontiers == 'all':
-            labels = self.label_random_frontier(grades)
-        else:
-            labels = self.label(grades)
+        labels = self.label_frontier(grades)
+        it = 0
+        while self.imbalanced(labels,max_imbalance) and it < self.MAX_ITER:
+            grades = np.random.uniform(0, 20, (self.size, self.num_criteria))
+            labels = self.label_frontier(grades)
+            it+=1
         grades, grades_test, labels, labels_test = train_test_split(
             grades, labels, test_size=self.size_test)
         if noisy:
@@ -179,6 +165,9 @@ class Generator():
     def split(self, grades, labels):
         self.grades, self.grades_test, self.admission, self.admission_test = train_test_split(
             grades, labels, test_size=self.size_test)
+
+    def to_pickle(self,name):
+        pickle.dump(self,name)
 
     def display(self):
         """
