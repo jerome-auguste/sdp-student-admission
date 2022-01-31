@@ -246,7 +246,7 @@ class SinglePeakModel:
                     coal_results = [
                         coal for coal in coal_results if i not in coal
                     ]
-                    crit = (None, None)
+                    class_front[i] = (None, None)
                 else:
                     min_crit = min(criterion_val)  # (i, h, k)
                     max_crit = max(criterion_val)

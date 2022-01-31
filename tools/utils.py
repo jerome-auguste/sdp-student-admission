@@ -22,6 +22,21 @@ def possible_values_per_crit(values_record: np.ndarray) -> list:
                         for stud in range(values_record.shape[0])})))
     return values_set
 
+def sorted_alternatives_per_crit(values_record: np.ndarray) -> list:
+    """Returns the index of the sorted values for each criterion
+
+    Args:
+        values_record (np.ndarray): generated dataset (from Generator)
+
+    Returns:
+        list: sorted lists of unique grades for each criterion
+    """
+    values_set = [
+            sorted(range(len(values_record)), key=lambda k, c=crit:values_record[k][c])
+            for crit in range(len(values_record[0]))]
+    return values_set
+
+
 def subsets(criteria: list) -> list:
     """Generic function to generate all subsets of a subset
 
@@ -117,29 +132,6 @@ def exec_gophersat(filename: str,
         model = lines[2][2:].split(" ")
 
         return (True, model)
-
-
-# def print_res(compute_time, res_train, admission, res_test=None, admission_test=None):
-#     """
-#     Print results and accuracy of a solver.
-
-#     Args:
-#         admission: array of category for each sample (ground truth)
-#         compute_time: computing time spent
-#         res_train: array of category found by the solver for each sample of the train set
-#         res_data: array of category found by the solver for each sample of the test set
-#     """
-#     print(f"Resultats:\n",
-#         "- temps de calcul: {:.3f}s\n".format(compute_time),
-#         f"- Sur le train set:\n",
-#         f"  - elements par categorie: {dict(Counter(res_train))}\n",
-#         f"  - precision: {sum([res_train[i]==admission[i] for i in range(len(res_train))])/len(res_train)}"
-#     )
-#     if res_test is not None:
-#         print(f"- Sur le test set (generalisation):\n",
-#             f"  - elements par categorie: {dict(Counter(res_test))}\n",
-#             f"  - precision: {sum([res_test[i]==admission_test[i] for i in range(len(res_test))])/len(res_test)}\n"
-#         )
 
 def accuracy(pred, ref):
     return sum([pred[i]==ref[i] for i in range(len(ref))])/len(pred)

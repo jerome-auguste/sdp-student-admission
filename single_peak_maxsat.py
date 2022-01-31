@@ -1,12 +1,12 @@
 """This module solves an U-NCS problem with a SAT Solver (gophersat)"""
 
 from tools.generator import Generator
-from tools.utils import possible_values_per_crit, subsets, clauses_to_dimacs, write_dimacs_file, exec_gophersat
+from tools.utils import sorted_alternatives_per_crit, subsets, clauses_to_dimacs, write_dimacs_file, exec_gophersat
 
 
 class MaxSatSinglePeakModel:
     """Non Compensatory Sorting model solved with (gophersat) MaxSAT solver
-    (cf. Belahcène et al 2018)"""
+    (cf. Tlili et al 2022)"""
 
     def __init__(self, generator: Generator) -> None:
 
@@ -20,7 +20,7 @@ class MaxSatSinglePeakModel:
             tuple(el) for el in subsets(list(range(self.gen.num_criteria)))
         ]
         # Tuple format is accepted as a key to the encoder dictionnary
-        self.values_support = possible_values_per_crit(self.train_set)
+        self.sorted_alt = sorted_alternatives_per_crit(self.train_set)
         # Set of the possible values in the train_set for each criterion
         self.alternatives_per_class = [[
             u for u in range(len(self.train_set)) if self.labels[u] == h
@@ -30,10 +30,10 @@ class MaxSatSinglePeakModel:
         # Section 3.4,Definition 4 (SAT encoding for U-NCS)
         self.variables = {
             "frontier_var":
-            list({(i, h, k)
+            list((i, h, x)
                   for i in range(self.gen.num_criteria)
                   for h in range(1, self.gen.num_classes)
-                  for k in self.values_support[i]}),
+                  for x in self.sorted_alt[i]),
             "coalition_var":
             self.coalitions,
         }
@@ -52,11 +52,19 @@ class MaxSatSinglePeakModel:
             for i, v in enumerate(self.variables["coalition_var"])
         }  # Indexes are starting right above where frontier indexing stops
         self.coal_i2v = {i: v for v, i in self.coal_v2i.items()}
+        
+        # Encodes/Decodes triggered if the NCS correctly classifies an alternative
+        self.correct_clf_v2i = {
+            z: z + len(self.front_i2v) + len(self.coal_i2v) + 1
+            for z in range(len(self.train_set))}
+        
+        self.correct_clf_i2v = {i: v for v, i in self.coal_v2i.items()}
 
         # Concatenates both encoding for the solver
         self.i2v = {}
         self.i2v.update(self.front_i2v)
         self.i2v.update(self.coal_i2v)
+        self.i2v.update(self.correct_clf_i2v)
 
         # Results to be shared to predict
         self.frontier = {i: [0]*self.gen.num_criteria for i in range(1, self.gen.num_classes)}
@@ -67,122 +75,132 @@ class MaxSatSinglePeakModel:
     def set_gophersat_path(self, gopherpath):
         self.gopherpath = gopherpath
 
-    def clauses_2a(self) -> list:
-        """Computes ascending scales clauses (named 2a in Definition 4),
+    def clauses_c1(self) -> list:
+        """Computes ascending scales clauses (named C1),
         those clauses are considered hard from weights point of view
-        For all criteria i, classes h and adjacent pairs of value k<k'<k":
-        x_{i, h, k} and x_{i, h, k"} => x_{i, h, k'}
+        For all criteria i, classes k and values x<x'<x":
+        x_{i, k, x} and x_{i, k, x"} => x_{i, k, x'}
 
         Returns:
             list: clauses according to the formula
         """
-        clauses_2a = []
+        clauses_c1 = []
         # Only for adjacent values of k
         for i in range(self.gen.num_criteria):
-            crit_values = self.values_support[
+            crit_values = self.sorted_alt[
                 i]  # Values are unique and already sorted
             for h in range(1, self.gen.num_classes):
-                for ik in range(len(crit_values) - 2):
-                    ikp = ik + 1
-                    iks = ik + 2
-                    clauses_2a.append([
-                        self.front_v2i[(i, h, crit_values[ikp])],
-                        -self.front_v2i[(i, h, crit_values[ik])],
-                        -self.front_v2i[(i, h, crit_values[iks])]
+                for ix in range(len(crit_values) - 2):
+                    ixp = ix + 1
+                    ixs = ix + 2
+                    clauses_c1.append([
+                        self.front_v2i[(i, h, crit_values[ixp])],
+                        -self.front_v2i[(i, h, crit_values[ix])],
+                        -self.front_v2i[(i, h, crit_values[ixs])]
                     ])
 
-        return clauses_2a
+        return clauses_c1
 
-    def clauses_2b(self) -> list:
+    def clauses_c2(self) -> list:
         """Computes Hierarchy of profiles clauses (named 2b in Definition 4)
         (Evaluates classes (frontier) according to each value),
         those clauses are considered hard from weights point of view
-        For all criteria i, adjacent pairs of classes h<h', values k:
-        x_{i, h', k} => x_{i, h, k}
+        For all criteria i, adjacent pairs of classes k<k', alternatives x:
+        a_{i, k', x} => a_{i, k, x}
         (being in higher classes makes the value greater to lower classes frontier)
 
         Returns:
             list: clauses according to the formula
         """
         # 3b Hierarchy of profiles
-        clauses_2b = []
+        clauses_c2 = []
         # Only for adjacent values
         for i in range(self.gen.num_criteria):
             for h in range(1, self.gen.num_classes - 1):
-                for k in set(self.values_support[i]):
-                    clauses_2b.append([
-                        self.front_v2i[(i, h, k)],
-                        -self.front_v2i[(i, h + 1, k)]
+                for x in set(self.sorted_alt[i]):
+                    clauses_c2.append([
+                        self.front_v2i[(i, h, x)],
+                        -self.front_v2i[(i, h + 1, x)]
                     ])
-        return clauses_2b
+        return clauses_c2
 
-    def clauses_2c(self) -> list:
+    def clauses_c3(self) -> list:
         """Computes coalitions strength clauses (named 2c in Definition 4),
         those clauses are considered hard from weights point of view
         For all "adjacent" (difference is exactly 1 element)
         pairs of coalitions (of criteria) B included in B'
-        y_B => y_{B'} (as having more criteria still forma sufficient coalition)
+        t_B => t_{B'} (as having more criteria still forms a sufficient coalition)
 
         Returns:
             list: clauses according to the formula
         """
-        clauses_2c = []
+        clauses_c3 = []
         # Only for a "adjacent" coalitions
         for B in self.coalitions:
             N_minus_B = {crit
                          for crit in range(self.gen.num_criteria)} - set(B)
             for i in N_minus_B:  # Adds exactly one element to the coalition
                 Bp = set(B).union(set([i]))
-                clauses_2c.append(
+                clauses_c3.append(
                     [self.coal_v2i[tuple(Bp)], -self.coal_v2i[B]])
 
-        return clauses_2c
+        return clauses_c3
 
-    def clauses_2d(self) -> list:
-        """Computes alternatives outranked by boundary above them clauses (named 2d in Definition 4)
+    def clauses_c5(self) -> list:
+        """Computes alternatives outranked by boundary above them clauses (named c5 tilde)
         (Ensures the correct representation of the assignment (labels)),
         those clauses are considered soft from weights point of view
-        For all coalition B, for all frontier h and all datapoint u assigned to class h-1
-        (AND_{i in B} x_{i, h, u_i}) => -y_B
-        (if an alternative is predicted above the h frontier, then the coalition is not sufficient)
+        For all coalition B, for all frontier k and all datapoint x assigned to class k-1
+        (AND_{i in B} a_{i, k, x}) => -y_B OR -z_x
+        (if an alternative is predicted above the k frontier, then the coalition is not sufficient
+        or the alternative is part of the noise)
 
         Returns:
             list: clauses according to the formula
         """
-        clauses_2d = []
+        clauses_c5 = []
         for B in self.coalitions:
-            for h in range(1, self.gen.num_classes):
-                for u in self.alternatives_per_class[h - 1]:
-                    clauses_2d.append([
-                        -self.front_v2i[(i, h, self.train_set[u, i])]
+            for k in range(1, self.gen.num_classes):
+                for x in self.alternatives_per_class[k - 1]:
+                    clauses_c5.append([
+                        -self.front_v2i[(i, k, x)]
                         for i in B
-                    ] + [-self.coal_v2i[B]])
+                    ] + [-self.coal_v2i[B]] + [-self.correct_clf_v2i[x]])
 
-        return clauses_2d
+        return clauses_c5
 
-    def clauses_2e(self) -> list:
+    def clauses_c6(self) -> list:
         """Computes alternatives outranked by boundary bellow them clauses
         (named 2e in Definition 4)
         (Ensures the correct representation of the assignment (labels)),
         those clauses are considered soft from weights point of view
-        For all coalition B, for all frontier h and all datapoint a assessed at class h
-        (AND_{i in B} -x_{i, h, a_i}) => y_{N-B}
+        For all coalition B, for all frontier h and all datapoint x assessed at class h
+        (AND_{i in B} -a_{i, h, x}) => y_{N-B} OR -z_x
         (If the alternative is assigned to the right class
         whereas all of its values are below the frontier for the considered coalition
-        then the complementary coalition is sufficient)
+        then the complementary coalition is sufficient or the datapoint is part of the noise)
 
         Returns:
             list: clauses according to the formula
         """
-        clauses_2e = []
+        clauses_c6 = []
         N = set(list(range(self.gen.num_criteria)))
         for B in self.coalitions:
             for h in range(1, self.gen.num_classes):
-                for a in self.alternatives_per_class[h]:
-                    clauses_2e.append([
-                        self.front_v2i[(i, h, self.train_set[a, i])] for i in B
-                    ] + [self.coal_v2i[tuple(N - set(B))]])
-        return clauses_2e
+                for x in self.alternatives_per_class[h]:
+                    clauses_c6.append([
+                        self.front_v2i[(i, h, x)] for i in B
+                    ] + [self.coal_v2i[tuple(N - set(B))]] + [-self.correct_clf_v2i[x]])
+        return clauses_c6
+    
+    def clauses_goal(self) -> list:
+        """Goal of the MaxSat: correctly classify most of the alternatives
+
+        Returns:
+            list: all triggers for all alternatives
+        """
+        return [self.correct_clf_v2i[x] for x in range(len(self.train_set))]
+
 
     def run_solver(self) -> list:
         """Uses clasues defined above to encode the NCS problem
@@ -192,15 +210,15 @@ class MaxSatSinglePeakModel:
             list: resulting frontiers between classes
         """
         # Add weights to the clauses
-        hard_clauses = self.clauses_2a() + self.clauses_2b() + self.clauses_2c()
-        soft_clauses = self.clauses_2d() + self.clauses_2e()
+        hard_clauses = self.clauses_c1() + self.clauses_c2() + self.clauses_c3() + self.clauses_c5() + self.clauses_c6()
+        soft_clauses = self.clauses_goal()
         hard_weight = len(soft_clauses) + 1
         
         for i, clause in enumerate(hard_clauses):
             hard_clauses[i] = [hard_weight] + clause
         
         for i, clause in enumerate(soft_clauses):
-            soft_clauses[i] = [1] + clause           
+            soft_clauses[i] = [1] + [clause]
         
         my_clauses = hard_clauses + soft_clauses
         
@@ -226,7 +244,7 @@ class MaxSatSinglePeakModel:
         is_sat, model = res
         if not is_sat:
             print("--------------------------------------- SAT WARNING! ---------------------------------------")
-            print("-              Optimum not found, alternatives might be assigned to class 0              -")
+            print("-              Optimum not found, alternatives might be assigned to class 0                -")
             print("--------------------------------------------------------------------------------------------")
 
 
