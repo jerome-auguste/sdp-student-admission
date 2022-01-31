@@ -1,17 +1,15 @@
 # %%
-from calendar import c
-from re import A
+from ctypes import resize
 import numpy as np
 from random import uniform
 from collections import Counter
 from sklearn.model_selection import train_test_split
 import pickle
 from joblib import Parallel,delayed
-
-
+from imblearn.over_sampling import SMOTE
 class Generator():
     FRONTIERS = ['all','monotonous','peak']
-    MAX_ITER = 100000
+    MAX_ITER = 1000
     def __init__(self, size: int = 100, num_classes: int = 2,
                  num_criteria: int = 4, lmbda: float = None,
                  weights: np.ndarray = None, frontier: np.ndarray = None,
@@ -139,20 +137,35 @@ class Generator():
 
     def imbalanced(self, labels, max_imbalance):
         counts = Counter(labels)
+        if len(counts) != self.num_classes:
+            return True
         for classe in counts:
-            if abs(counts[classe]/(self.size/self.num_classes)-1) > max_imbalance:
+            if abs(counts[classe]/self.size-1/self.num_classes)/(1/self.num_classes) > max_imbalance:
                 return True
         return False
 
-    def generate(self, noisy, noise_percent=0.05,max_imbalance=0.3):
+    def resize(self,grades,labels):
+        grades,_,labels,_ =train_test_split(grades,labels,train_size=self.size)
+        return grades, labels
+
+    def equilibrate(self,grades,labels):
+        success,it = False, 0
+        while not success and it < self.MAX_ITER:
+            try:
+                resampler = SMOTE(k_neighbors=2)
+                grades, labels = resampler.fit_resample(grades,labels)
+                success = True
+            except:
+                grades = np.random.uniform(0, 20, (self.size, self.num_criteria))
+                labels = self.label_frontier(grades)
+                it+=1
+        return grades,labels
+
+    def generate(self, noisy, noise_percent=0.05):
         # génère les notes et les labels
         grades = np.random.uniform(0, 20, (self.size, self.num_criteria))
         labels = self.label_frontier(grades)
-        it = 0
-        while self.imbalanced(labels,max_imbalance) and it < self.MAX_ITER:
-            grades = np.random.uniform(0, 20, (self.size, self.num_criteria))
-            labels = self.label_frontier(grades)
-            it+=1
+        grades, labels = self.resize(*self.equilibrate(grades,labels))
         grades, grades_test, labels, labels_test = train_test_split(
             grades, labels, test_size=self.size_test)
         if noisy:
