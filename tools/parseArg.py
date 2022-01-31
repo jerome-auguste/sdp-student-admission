@@ -14,7 +14,7 @@ def parseArguments():
     parser.add_argument("-g", "--gopher-path", help="Path to gophersat solver.", type=str, default="./gophersat.exe")
     parser.add_argument("-npct", "--noise_percent", help="Percentage of noisy (false) label, if noisy activated", default=0.05)
     parser.add_argument('-f', "--file", help="path to file", default=None)
-    parser.add_argument('-p', "--possible frontiers : peak,valley or random", help="generate different types of frontiers", default=None)
+    parser.add_argument('-p', "--possible_frontier", help="generate different types of frontiers : peak,valley or random", default=None)
 
 
     return parser.parse_args()

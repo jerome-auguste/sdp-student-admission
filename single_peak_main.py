@@ -8,7 +8,7 @@ from single_peak_sat import SinglePeakModel
 if __name__=='__main__':
     args = parseArguments()
     if args.file is None:
-        gen = Generator(args.size, args.num_classes, args.num_criteria, args.lmbda, noisy=args.noisy, noise_percent= args.noise_percent)
+        gen = Generator(args.size, args.num_classes, args.num_criteria, args.lmbda, noisy=args.noisy, noise_percent= args.noise_percent, possible_frontiers=args.possible_frontier)
         gen.display()
     else:
         rd = csvReader(args.file)
