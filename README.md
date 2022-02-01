@@ -28,12 +28,14 @@ The goal is to find the best parameters on an optimization problem to accept a s
 ├── single_peak_sat.py      # U-NCS single peak SAT model class
 ├── single_peak_maxsat.py   # U-NCS single peak and MaxSAT model class
 ├── MR-Sort-NCS.pdf         # Guidelines of the project
+├── generate_csv.py         # Script to generate csv for graphs
 ├── tools                   # Tools and utilities
 │   ├── generator.py        # Generates dataset based on parameters
 │   ├── parseArg.py         # Command line argument parser used in main
 │   ├── utils.py            # Utilities functions
 │   └── csvReader.py        # Reader for csv data
 │
+├── requirements.txt    
 ├── LICENSE
 ├── .gitignore
 └── README.md
