@@ -36,6 +36,8 @@ class MaxSatSinglePeakModel:
                   for x in self.sorted_alt[i]),
             "coalition_var":
             self.coalitions,
+            "triggers":
+                list(range(len(self.train_set)))
         }
 
         # Encodes/Decodes variables defining the frontiers
@@ -56,9 +58,9 @@ class MaxSatSinglePeakModel:
         # Encodes/Decodes triggered if the NCS correctly classifies an alternative
         self.correct_clf_v2i = {
             z: z + len(self.front_i2v) + len(self.coal_i2v) + 1
-            for z in range(len(self.train_set))}
+            for z in self.variables["triggers"]}
         
-        self.correct_clf_i2v = {i: v for v, i in self.coal_v2i.items()}
+        self.correct_clf_i2v = {i: v for v, i in self.correct_clf_v2i.items()}
 
         # Concatenates both encoding for the solver
         self.i2v = {}
@@ -69,6 +71,7 @@ class MaxSatSinglePeakModel:
         # Results to be shared to predict
         self.frontier = {i: [0]*self.gen.num_criteria for i in range(1, self.gen.num_classes)}
         self.suff_coal = ()
+        self.true_statements = []
 
         self.gopherpath = None
 
@@ -186,10 +189,10 @@ class MaxSatSinglePeakModel:
         clauses_c6 = []
         N = set(list(range(self.gen.num_criteria)))
         for B in self.coalitions:
-            for h in range(1, self.gen.num_classes):
-                for x in self.alternatives_per_class[h]:
+            for k in range(1, self.gen.num_classes):
+                for x in self.alternatives_per_class[k]:
                     clauses_c6.append([
-                        self.front_v2i[(i, h, x)] for i in B
+                        self.front_v2i[(i, k, x)] for i in B
                     ] + [self.coal_v2i[tuple(N - set(B))]] + [-self.correct_clf_v2i[x]])
         return clauses_c6
     
@@ -199,11 +202,11 @@ class MaxSatSinglePeakModel:
         Returns:
             list: all triggers for all alternatives
         """
-        return [self.correct_clf_v2i[x] for x in range(len(self.train_set))]
+        return [self.correct_clf_v2i[x] for x in self.variables["triggers"]]
 
 
     def run_solver(self) -> list:
-        """Uses clasues defined above to encode the NCS problem
+        """Uses clauses defined above to encode the NCS problem
         into a SAT problem, solved by gophersat
 
         Returns:
@@ -219,13 +222,13 @@ class MaxSatSinglePeakModel:
         
         for i, clause in enumerate(soft_clauses):
             soft_clauses[i] = [1] + [clause]
-        
+
         my_clauses = hard_clauses + soft_clauses
         
         my_dimacs = clauses_to_dimacs(
             my_clauses,
             len(self.variables["frontier_var"]) +
-            len(self.variables["coalition_var"]), max_weight=hard_weight)
+            len(self.variables["coalition_var"]) + len(self.variables['triggers']), max_weight=hard_weight)
 
         write_dimacs_file(my_dimacs, "workingfile.wcnf")
         res = exec_gophersat(filename="workingfile.wcnf", cmd=self.gopherpath, weighted=True)
@@ -254,11 +257,17 @@ class MaxSatSinglePeakModel:
             self.i2v[abs(int(v))]: int(v) > 0
             for v in model if int(v) != 0
         }
+        # print(var_model)
         front_results = [
             x for x in self.variables["frontier_var"] if x in var_model and var_model[x]
+            and var_model[x[2]]
         ]
         coal_results = [
             x for x in self.variables["coalition_var"] if x in var_model and var_model[x]
+        ]
+        
+        clf_results = [
+            x for x in self.variables["triggers"] if x in var_model and var_model[x]
         ]
 
         # print("Frontier variables assumptions:")
@@ -268,11 +277,11 @@ class MaxSatSinglePeakModel:
         # print(f"Resulted sufficient coalitions: {coal_results}")
 
         # frontier = {i: [0]*self.gen.num_criteria for i in range(1, self.gen.num_classes)}
-        for h in range(1, self.gen.num_classes):
+        for k in range(1, self.gen.num_classes):
             class_front = [(0, 0)]*self.gen.num_criteria
             for i in range(self.gen.num_criteria):
                 criterion_val = [
-                    x[2] for x in front_results if x[0] == i and x[1] == h
+                    self.train_set[x[2]][i] for x in front_results if x[0] == i and x[1] == k and clf_results[x[2]]
                 ]
                 if len(criterion_val) == 0:
                     # In case no frontier is found for this criterion, remove it from coalitions
@@ -285,7 +294,7 @@ class MaxSatSinglePeakModel:
                     max_crit = max(criterion_val)
                     class_front[i] = (min_crit, max_crit)
 
-            self.frontier[h] = class_front
+            self.frontier[k] = class_front
         # print("\nFrontier")
         # for el in frontier:
         #     print(el)
@@ -327,15 +336,16 @@ class MaxSatSinglePeakModel:
         """
         pred = [0]*len(self.gen.grades_test)
         for i_alt, alt in enumerate(self.gen.grades_test):
-            try :
+            try:
                 pred[i_alt] = min([  # Takes the min class found (assuming ordered classes)
                         sum([  # Classifies values for each criteria
-                            (alt[i] >= self.frontier[h][i][0]) and (alt[i] <= self.frontier[h][i][1])
-                            for h in range(1, self.gen.num_classes) if h in self.frontier
+                            (alt[i] >= self.frontier[k][i][0]) and (alt[i] <= self.frontier[k][i][1])
+                            for k in range(1, self.gen.num_classes) if k in self.frontier
                         ]) for i in self.suff_coal
                     ])
-            except ValueError:
-                pass
 
+            except ValueError:
+                print("Value error found, there is a risk of misclassification")
+                pass
 
         return pred
