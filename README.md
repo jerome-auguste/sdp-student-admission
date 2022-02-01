@@ -138,9 +138,40 @@ Different clauses are then created, defining the rules our solver will respect:
 - $`\forall B \subseteq \mathcal{N}, \forall 1 \leq h \leq p-1 \forall a \in X^*: A(a) = C^{h}, \quad \bigwedge_{i \in B}{\neg x_{i, h, a_i}} \Rightarrow y_{\mathcal{N} \setminus B}`$  (5)
 
 
-# Single Peak problem
+# :mountain: Single Peak problem
 
 ## U-NCS SAT approach
 
 The formulation of the problem is similar, except for (1) which is replaced by :
 - $`\forall i \in \mathcal{N}, \forall 1 \leq h \leq p-1, \forall k<k'<k'', \quad x_{i, h, k} \wedge x_{i,h,k''} \Rightarrow x_{i, h, k'}`$  (1')
+
+
+## MaxSAT approach
+
+As real life datasets might be noisy (misclassification of some alternatives), it is sometimes necessary to take that into account and find a way to correctly classify most of the alternatives. To do so, we can use a Weighted/Partial MaxSat approach (available with the same gophersat solver).
+
+### Direct translation into MaxSAT
+
+Our first model was to hierarchise our clauses, which is setting hard clauses and soft clauses as respectively rules that we don't want to infringe and rules that can be infringed (by noisy data).
+
+That way, we want to keep the class, as well as the values and coalition hierarchies. Therefore, we have to set a hard clause $`w_{hard}`$ for clauses $`(1'), (2)`$ and $`(3)`$. However we want to relax the misclassification clauses for noisy alternatives, which means that we can set a weight of $`w_1`$ to clauses $`(4)`$ and $`(5)`$ so that $`w_{hard} > N_{soft} w_1`$
+
+### Adapted formulation for MaxSAT
+
+Using [Tlili et al. 2022](https://centralesupelec.edunao.com/pluginfile.php/209234/mod_label/intro/2022-Tili-et-al-EJOR.pdf), we had another approach using an adaptation of the clauses by adding a new boolean trigger $`z_x`$ that shows whether an alternative $`x \in X^*`$ is well classified by the model or not.
+This leads to changing clauses $`(4)`$ and $`(5)`$ to the followings:
+
+- $`\forall B \subseteq \mathcal{N}, \forall 1 \leq h \leq p-1 \forall u \in X^*: A(u) = C^{h-1}, \quad \bigwedge_{i \in B}{x_{i, h, u_i}} \Rightarrow \neg y_B \vee z_u`$ (4')
+- $`\forall B \subseteq \mathcal{N}, \forall 1 \leq h \leq p-1 \forall a \in X^*: A(a) = C^{h}, \quad \bigwedge_{i \in B}{\neg x_{i, h, a_i}} \Rightarrow y_{\mathcal{N} \setminus B} \vee z_a`$  (5')
+
+This changes gives more relaxation to the misclassification clauses: the clause can still be true in case of misclassification since the trigger can be set to `False`
+
+We also had to add the clause that sets a soft rule for maximizing the number of well classified alternatives:
+
+ ```math
+ \forall x \in X^*, z_x
+ ```
+
+This approach can be found in the `maxsat` branch but since performances were not significantly better than the direct translation, this approach is still in experimental phase
+
+As the formulation is quite different from the other one, we might need to properly decode the results of the MaxSAT solver to improve performance. This can be done for further contributions.
